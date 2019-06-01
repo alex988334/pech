@@ -40,9 +40,29 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php Pjax::begin(); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
     <p>
-        <?= $r = ($role == AuthItem::MANAGER || $role == AuthItem::HEAD_MANAGER) 
-            ? Html::a('Добавить новую заявку', ['create'], 
-                    ['class' => 'btn btn-success']) : ''; ?>
+        <?= ($role == AuthItem::MANAGER || $role == AuthItem::HEAD_MANAGER) ?
+                Html::a('Добавить новую заявку', ['create'], ['class' => 'btn btn-success']) : ''; ?>                
+        <?php 
+            if (Yii::$app->session->get('invisibleExecutedOrders') == FALSE) {
+                $class = 'btn btn-success';
+                $buttonLabel = 'Показать завершенные';
+            } else {
+                $class = 'btn btn-warning';
+                $buttonLabel = 'Скрыть завершенные';
+            } 
+            if (Yii::$app->session->get('invisibleBlockedOrders') == FALSE) {
+                $class1 = 'btn btn-success';
+                $buttonLabel1 = 'Показать заблокированные';
+            } else {
+                $class1 = 'btn btn-warning';
+                $buttonLabel1 = 'Скрыть заблокированные';
+            }
+        ?>             
+        <?= ($role == AuthItem::MANAGER || $role == AuthItem::HEAD_MANAGER) ? 
+                Html::a($buttonLabel, ['show-executed-orders'], ['class' => $class]) : ''; ?>
+        <?= ($role == AuthItem::MANAGER || $role == AuthItem::HEAD_MANAGER) ? 
+                Html::a($buttonLabel1, ['show-blocked-orders'], ['class' => $class1]) : ''; ?>
+        
     </p>
     <?php 
         $gridView = [ 'dataProvider' => $dataProvider ];  
@@ -61,6 +81,21 @@ $this->params['breadcrumbs'][] = $this->title;
                 ];
                 $last = count($massColums) - 1;
                 switch ($one['name']){ 
+                    case 'id':
+                        $massColums[$last]['format'] = 'raw';
+                        $massColums[$last]['value'] = function ($data) {
+                            return Html::a($data['id'], ['/client-order-master/index'], 
+                                    [
+                                        'title' => 'клиент-заявка-мастер',
+                                        'data' => [
+                                            'method' => 'post', 
+                                            'params' => [
+                                                'id_order' => $data['id'],
+                                            ]
+                                        ]
+                                    ]);                        
+                        };
+                        break;
                     case 'id_vid_work': 
                         $massColums[$last]['attribute'] = 'vid_work_name';                   
                         $massColums[$last]['label'] = 'Вид работ';
@@ -90,7 +125,52 @@ $this->params['breadcrumbs'][] = $this->title;
                         $massColums[$last]['attribute'] = 'ocenka_name';                   
                         $massColums[$last]['label'] = 'Оценка';
                         $massColums[$last]['filter'] = ArrayHelper::map($massFilters['vidOcenka'], 'name', 'name');
-                        break;                                      
+                        break; 
+                    case 'data_registry':
+                        $massColums[$last]['value'] = function ($data){ 
+                            return $data['data_registry'] ?? NULL;
+                        };
+                        $massColums[$last]['filter'] = yii\jui\DatePicker::widget([                
+                            'model' => $searchModel,
+                            'attribute' => 'data_registry',
+                            'language' => 'ru',
+                            'dateFormat' => 'dd-MM-yyyy',
+                            'options' => [
+                                'class' => 'form-control',
+                            ],
+                        ]);
+                        $massColums[$last]['format'] = ['date', 'php:d-m-Y'];
+                        break;
+                    case 'data_start':
+                        $massColums[$last]['value'] = function ($data){ 
+                            return $data['data_start'] ?? NULL;
+                        };
+                        $massColums[$last]['filter'] = yii\jui\DatePicker::widget([                
+                            'model' => $searchModel,
+                            'attribute' => 'data_start',
+                            'language' => 'ru',
+                            'dateFormat' => 'dd-MM-yyyy',
+                            'options' => [
+                                'class' => 'form-control',
+                            ],
+                        ]);
+                        $massColums[$last]['format'] = ['date', 'php:d-m-Y'];
+                        break;
+                    case 'data_end':
+                        $massColums[$last]['value'] = function ($data){ 
+                            return $data['data_end'] ?? NULL;
+                        };
+                        $massColums[$last]['filter'] = yii\jui\DatePicker::widget([                
+                            'model' => $searchModel,
+                            'attribute' => 'data_end',
+                            'language' => 'ru',
+                            'dateFormat' => 'dd-MM-yyyy',
+                            'options' => [
+                                'class' => 'form-control',
+                            ],
+                        ]);
+                        $massColums[$last]['format'] = ['date', 'php:d-m-Y'];
+                        break;  
                 }
             }
             $massColums[] = [
@@ -170,15 +250,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 echo ShowFields::widget (['fields' => $fields]); 
                 $this->registerJsFile('@web/js/select_fields.js', [
                     'dependst' => 'yii\web\YiiAsset',
-                    'position' => View::POS_END]);                
-                $this->registerJs(
-                    'massChange = []; $("#selectedFields").children("input").each(function (index, value){
-                    this.onclick = function(elem) { 
-                    var one = $(massChange).filter(function (i, k){ return k[0] == elem.target.id; });
-                    if (one.length != 0) { if (elem.target.checked) one[0].visible = 1; else one[0].visible = 0; 
-                    } else massChange.push({id: elem.target.id, visible: elem.target.checked});};});',
-                    View::POS_READY
-                );
+                    'position' => View::POS_END]);   
             }
         ?>
     </div>

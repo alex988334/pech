@@ -36,7 +36,7 @@ $this->params['breadcrumbs'][] = 'Обновление';
     
     <?php $form = ActiveForm::begin(); ?>
     
-    <?= $form->field($model, 'id')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'id')->textInput(['maxlength' => true, 'readonly' => true]) ?>
 
     <?= $form->field($model, 'id_vid_work')->dropDownList(ArrayHelper::map($vid['vidWork'], 'id', 'name'))?>
 
@@ -65,11 +65,17 @@ $this->params['breadcrumbs'][] = 'Обновление';
     <?= $form->field($model, 'data_start')->widget(DatePicker::class, [
         'language' => 'ru',
         'dateFormat' => 'yyyy-MM-dd',
+        'options' => [
+            'class' => 'form-control',
+        ],
     ]) ?>
 
     <?= $form->field($model, 'data_end')->widget(DatePicker::class, [
         'language' => 'ru',
         'dateFormat' => 'yyyy-MM-dd',
+        'options' => [
+            'class' => 'form-control',
+        ],
     ]) ?>
 
     <?php /* '<div><a href="#" class="spoiler-title">Карта</a>
@@ -143,11 +149,11 @@ $this->params['breadcrumbs'][] = 'Обновление';
     
     <?php $form1 = ActiveForm::begin(['options' => ['enctype' => 'multipart/form-data']]); ?>
     
-    <?= $form1->field($model1, 'image_file')->label('Выберите новое изображение')->fileInput() ?>
+    <?= $form1->field($model1, 'image_file')->label('Выберите новое изображение')->fileInput(); ?>
     
     <?php // '<input name="id" hidden value="' . $model->id . '">' ?>
     
-    <?= $form1->field($model1, 'id')->textInput(['value' => $model->id ]) ?>
+    <?= $form1->field($model1, 'id')->label('№ заявки')->textInput(['value' => $model->id, 'readonly' => true]); ?>
    
     <div class="form-group">
         <?= Html::submitButton('Сохранить новое изображение', ['class' => 'btn btn-success']) ?>

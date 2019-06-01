@@ -22,7 +22,8 @@
         "consik/yii2-websocket": "^1.0",
         "yiisoft/yii2-jui": "^2.0",		
 		"mirocow/yii2-yandex-maps" : "@dev",
-        "workerman/workerman": "^3.5"
+        "workerman/workerman": "^3.5",
+        "kartik-v/yii2-widget-datepicker": "^1.4"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.0.0",

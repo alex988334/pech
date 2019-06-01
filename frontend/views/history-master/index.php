@@ -11,7 +11,7 @@ use yii\web\View;
 /* @var $searchModel common\models\HistoryMasterSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = 'History Masters';
+$this->title = 'История мастеров';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="history-master-index">
@@ -39,6 +39,14 @@ $this->params['breadcrumbs'][] = $this->title;
                         $massColums[$last]['attribute'] = 'status_history_name';                   
                         $massColums[$last]['label'] = 'Статус записи';
                         $massColums[$last]['filter'] = ArrayHelper::map($massFilters['vidStatusHistory'], 'name', 'name');
+                        $massColums[$last]['format'] = 'raw';
+                        $massColums[$last]['value'] = function ($data){
+                            if ($data['id_status_history'] == '3') {
+                                return $data['status_history_name'] . '<br>' . Html::a('<span class="glyphicon glyphicon-export"></span>', 
+                                    ['/history-master/recovery'], ['data' => ['method' => 'post', 'params' => ['id' => $data['id']]]]);
+                            }
+                            return $data['status_history_name'];
+                        };
                         break;
                     case 'id_status_on_off': 
                         $massColums[$last]['attribute'] = 'status_on_off_name';                   
@@ -70,15 +78,7 @@ $this->params['breadcrumbs'][] = $this->title;
             echo ShowFields::widget (['fields' => $fields]); 
             $this->registerJsFile('@web/js/select_fields.js', [
                 'dependst' => 'yii\web\YiiAsset',
-                'position' => View::POS_END]);                
-            $this->registerJs(
-                'massChange = []; $("#selectedFields").children("input").each(function (index, value){
-                this.onclick = function(elem) { 
-                var one = $(massChange).filter(function (i, k){ return k[0] == elem.target.id; });
-                if (one.length != 0) { if (elem.target.checked) one[0].visible = 1; else one[0].visible = 0; 
-                } else massChange.push({id: elem.target.id, visible: elem.target.checked});};});',
-                View::POS_READY
-            );
+                'position' => View::POS_END]);  
         }
     ?>
 </div>

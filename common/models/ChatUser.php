@@ -30,6 +30,7 @@ class ChatUser extends \yii\db\ActiveRecord
         return [
             [['id_chat', 'id_user'], 'required'],
             [['id_chat', 'id_user'], 'integer'],
+            [['client_hash'], 'string', 'max' => 255],
             [['id_chat', 'id_user'], 'unique', 'targetAttribute' => ['id_chat', 'id_user']],
             [['id_chat'], 'exist', 'skipOnError' => true, 'targetClass' => Chat::className(), 'targetAttribute' => ['id_chat' => 'id']],
         ];
@@ -43,6 +44,7 @@ class ChatUser extends \yii\db\ActiveRecord
         return [
             'id_chat' => '№ чата',
             'id_user' => '№ пользователя',
+            'client_hash' => 'Идентификатор клиента',
         ];
     }
 

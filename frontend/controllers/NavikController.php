@@ -83,7 +83,7 @@ class NavikController extends Controller
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
             'fields' => $fields,
-            'massFilters' => $this->getRelationTablesArray()
+            'massFilters' => MasterWorkNavik::getRelationTablesArray()
         ]);
     }
 
@@ -108,7 +108,7 @@ class NavikController extends Controller
     public function actionCreate()
     {
         $model = new MasterWorkNavik();
-        $vid = $this->getRelationTablesArray();
+        $vid = MasterWorkNavik::getRelationTablesArray();
         
         if (Yii::$app->request->isGet && Yii::$app->request->get('id_master')) { 
             $model->id_master = Yii::$app->request->get('id_master');
@@ -151,7 +151,7 @@ class NavikController extends Controller
         }
 
         return $this->render('update', [
-            'model' => $model, 'vid' => $this->getRelationTablesArray()
+            'model' => $model, 'vid' => MasterWorkNavik::getRelationTablesArray()
         ]);
     }
 
@@ -193,12 +193,12 @@ class NavikController extends Controller
         throw new NotFoundHttpException('The requested page does not exist.');
     }
     
-    protected function getRelationTablesArray()
+   /* protected function getRelationTablesArray()
     {
         $vid = [];
         $vid['vidWork'] = VidWork::find()->asArray()->all();
         $vid['vidNavik'] = VidNavik::find()->asArray()->all();
         
         return $vid;
-    }
+    }*/
 }

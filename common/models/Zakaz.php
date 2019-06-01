@@ -40,6 +40,7 @@ class Zakaz extends \yii\db\ActiveRecord
     const SCENARIO_UPDATE_MASTER = 'update_master';
     const SCENARIO_UPDATE_HEAD_MANAGER = 'update_head_manager';
     const SCENARIO_CREATE = 'create';
+    const SCENARIO_RECOVERY = 'recovery';
     
     /**
      * {@inheritdoc}
@@ -65,6 +66,8 @@ class Zakaz extends \yii\db\ActiveRecord
             [['zametka'], 'string', 'max' => 255],
             [['gorod', 'poselok', 'ulica', 'image'], 'string', 'max' => 50],
             [['otziv'], 'string', 'max' => 1000],
+            
+    /*недавно*/        [['id'], 'unique', 'targetAttribute' => ['id']],
             
             [['id_navik'], 'exist', 'skipOnError' => true, 'targetClass' => VidNavik::className(), 'targetAttribute' => ['id_navik' => 'id']],
             [['id_status_zakaz'], 'exist', 'skipOnError' => true, 'targetClass' => VidStatusZakaz::className(), 'targetAttribute' => ['id_status_zakaz' => 'id']],
@@ -98,6 +101,13 @@ class Zakaz extends \yii\db\ActiveRecord
                 'id_vid_work', 'id_navik', 'name', 'cena', 'opisanie', 
                 'reyting_start', 'zametka', 'gorod', 'poselok', 'ulica', 'dom', 
                 'kvartira', 'data_start', 'data_end', 'dolgota', 'shirota'
+            ],
+            
+            self::SCENARIO_RECOVERY => [
+                'id', 'id_vid_work', 'id_navik', 'name', 'cena', 'opisanie', 'reyting_start',
+                'zametka', 'gorod', 'poselok', 'ulica', 'dom', 'kvartira', 'id_status_zakaz',
+                'id_shag', 'data_registry', 'data_start', 'data_end', 'dolgota', 'shirota',
+                'dolgota_change', 'shirota_change', 'image', 'id_region', 'id_ocenka', 'otziv'
             ],
         ];
     }
@@ -204,5 +214,20 @@ class Zakaz extends \yii\db\ActiveRecord
     public function getOcenka()
     {
         return $this->hasOne(VidOcenka::className(), ['id' => 'id_ocenka']);
+    }
+    
+    public static function getRelationTablesArray()
+    {
+        $vid = [];
+        $vid['vidNavik'] = VidNavik::find()->indexBy('id')->asArray()->all();        
+        $vid['vidStatusZakaz'] = VidStatusZakaz::find()->select(['id', 'name'])->indexBy('id')->asArray()->all();        
+        $vid['vidShag'] = VidShag::find()->indexBy('id')->asArray()->all();
+        $vid['vidRegion'] = VidRegion::find()->select(['id', 'name'])
+                ->where('parent_id <> 0')->indexBy('id')->asArray()->all();
+        
+        $vid['vidWork'] = VidWork::find()->indexBy('id')->asArray()->all();        
+        $vid['vidOcenka'] = VidOcenka::find()->indexBy('id')->asArray()->all();
+        
+        return $vid;
     }
 }

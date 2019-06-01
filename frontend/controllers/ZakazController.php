@@ -10,6 +10,7 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use common\models\Master;
+use common\models\ClientOrderMaster;
 use common\models\MasterVsZakaz;
 use common\models\MasterWorkNavik;
 use common\models\VidRegion;
@@ -38,6 +39,9 @@ use yii\web\UploadedFile;
  */
 class ZakazController extends Controller
 {    
+    const STATUS_ACCEPT = 1;
+    const STATUS_ERROR = 0;
+    
     /**
      * {@inheritdoc}
      */
@@ -76,7 +80,11 @@ class ZakazController extends Controller
                             'create',
                             'delete',
                             'update',
-                            'save-fields'
+                            'save-fields',
+                            'accept-take-order',
+                            'repeat',
+                            'show-executed-orders',
+                            'show-blocked-orders',
                         ],
                         'allow' => true,
                         'roles' => ['manager', 'head_manager'],
@@ -92,7 +100,66 @@ class ZakazController extends Controller
         ];
     }
 
+    public function actionShowExecutedOrders()
+    {
+        if (Yii::$app->session->get('invisibleExecutedOrders') == FALSE) {
+            Yii::$app->session->set('invisibleExecutedOrders', TRUE);
+        } else {
+            Yii::$app->session->set('invisibleExecutedOrders', FALSE);
+        }
+        
+        return $this->redirect(Yii::$app->request->referrer ?? '/client-order-master/index');
+    }
+    
+    public function actionShowBlockedOrders()
+    {
+        if (Yii::$app->session->get('invisibleBlockedOrders') == FALSE) {
+            Yii::$app->session->set('invisibleBlockedOrders', TRUE);
+        } else {
+            Yii::$app->session->set('invisibleBlockedOrders', FALSE);
+        }
+        
+        return $this->redirect(Yii::$app->request->referrer ?? '/client-order-master/index');
+    }
+    
+    
+    public function actionAcceptTakeOrder()
+    {
+        if (!Yii::$app->request->isAjax) return;
+        
+        if ($id = Yii::$app->request->post('id')) {
+            try {
+                if (Yii::$app->db->createCommand('UPDATE zakaz SET id_status_zakaz=' . VidStatusZakaz::ORDER_EXECUTES
+                    . ' WHERE id=' . $id)->execute()) {
+                    return json_encode(['status' => self::STATUS_ACCEPT]);
+                }                   
+            } catch (\Exception $ex) {
+                return json_encode(['status' => self::STATUS_ERROR]);
+            }
+        }
+        
+        return json_encode(['status' => self::STATUS_ERROR, 's_code' => VidStatusZakaz::ORDER_EXECUTES]);        
+    }
 
+    public function actionRepeat()
+    {
+        if (!Yii::$app->request->isAjax) return json_encode(['status' => self::STATUS_ERROR]);
+        
+        $id = Yii::$app->request->post('id'); 
+        $model = Zakaz::find()->where(['id' => $id])->limit(1)->one();     
+        
+        if (empty($model)) {
+            return json_encode(['status' => self::STATUS_ERROR]);
+        }
+        
+        $model->scenario = Zakaz::SCENARIO_UPDATE_MANAGER;
+        $model->id_status_zakaz = VidStatusZakaz::ORDER_EXECUTES;
+        
+        if ($model->save()) return json_encode(['status' => self::STATUS_ACCEPT]);
+        
+        return json_encode(['status' => self::STATUS_ERROR, 'id' => $id]);  
+    }
+    
     public function actionVid() 
     {        
         $session = Yii::$app->session; 
@@ -145,16 +212,21 @@ class ZakazController extends Controller
         }
         $id = Yii::$app->request->post('id') ?? null;
         $zakaz = Zakaz::find()->where('id=:id', [':id' => $id])->limit(1)->one();  
-        if (!$zakaz) {                                                          //  проверяем присланое пользователем на sql инъекцию
-            $session->setFlash('message', 'Нет такой заявки');
+        $clientOrder = ClientOrderMaster::findOne(['id_order' => $id]);
+        
+        if (!$zakaz || !$clientOrder) {                                                          //  проверяем присланое пользователем на sql инъекцию
+            $session->setFlash('message', 'Нет такой заявки или заявка не связана с клиентом');
             return $this->redirect('/zakaz/index');
         }
         
         $master = Master::find()->select(['limit_zakaz', 'id_region', 'reyting', 'balans'])
                 ->where(['id_master' => Yii::$app->user->id])
                 ->limit(1)->asArray()->one();        
-        $activeZakaz = MasterVsZakaz::find()
-                ->where(['id_master' => Yii::$app->user->id])         
+        $activeZakaz = ClientOrderMaster::find()
+                ->where(['id_master' => Yii::$app->user->id])  
+                ->andWhere(['<>', 'zakaz.id_status_zakaz', VidStatusZakaz::ORDER_CANCELLED])
+                ->andWhere(['<>', 'zakaz.id_status_zakaz', VidStatusZakaz::ORDER_EXECUTED])
+                ->joinWith('order')
                 ->count();    
         
         if ($master['limit_zakaz'] <= $activeZakaz) {
@@ -162,7 +234,7 @@ class ZakazController extends Controller
             return $this->redirect('/zakaz/index');
         }              
         if ($zakaz->id_status_zakaz != VidStatusZakaz::ORDER_AVAILABLE) {
-            $session->setFlash('message', 'Эта заявка занята');
+            $session->setFlash('message', 'Эта заявка занята!');
             return $this->redirect('/zakaz/index');
         }        
         if ($master['id_region'] != $zakaz->id_region) {
@@ -199,12 +271,14 @@ class ZakazController extends Controller
             $session->setFlash('message', 'На балансе не хватает ' . $balans . ' рублей');
             return $this->redirect('/zakaz/index');
         }
-        $query[] = 'INSERT INTO {{master_vs_zakaz}} '
+       /* $query[] = 'INSERT INTO {{master_vs_zakaz}} '
                 . '([[id_master]], [[id_zakaz]]) '              //  , [[time]], [[date]]
                 . 'VALUES ("' . Yii::$app->user->id . '", "'. $zakaz->id 
-               /* . '", "' . date('H:i:s') . '", "' . date('Y-m-d') */ . '")'; 
+               /* . '", "' . date('H:i:s') . '", "' . date('Y-m-d')  . '")'; */
         
-        $query[] = 'UPDATE {{zakaz}} SET [[id_status_zakaz]]=' . VidStatusZakaz::ORDER_EXECUTES
+        $query[] = 'UPDATE {{client_order_master}} SET [[id_master]]=' . Yii::$app->user->getId()
+                . ' WHERE [[id]]=' . $clientOrder->id;                
+        $query[] = 'UPDATE {{zakaz}} SET [[id_status_zakaz]]=' . VidStatusZakaz::ORDER_REQUEST_TAKE
                 . ' WHERE [[id]]=' . $zakaz->id;        
         $query[] = 'UPDATE {{master}} SET [[balans]]=' . $balans 
                 . ' WHERE [[id_master]]=' . Yii::$app->user->id;
@@ -215,7 +289,7 @@ class ZakazController extends Controller
         try {
             foreach ($query as $one) { $connection->createCommand($one)->execute(); }
             $transaction->commit();
-            $session->setFlash('message', 'Заявка закреплена за вами'); 
+            $session->setFlash('message', 'Запрос на утверждении у менеджера'); 
             $session->setFlash('aktivateZakaz', $zakaz->id);                      
         } catch (\Exception $e) {
             $transaction->rollBack();
@@ -289,7 +363,7 @@ class ZakazController extends Controller
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,    
             'fields' => $fields,
-            'massFilters' => $this->getRelationTablesArray()
+            'massFilters' => Zakaz::getRelationTablesArray()
         ]); 
     }
 
@@ -305,8 +379,12 @@ class ZakazController extends Controller
         
         $model1 = HistoryZakaz::createHistoryModel($id, VidStatusHistory::STATUS_LOOK);       
         
-        if ($model1->validate() && $model1->save()) Yii::$app->session->setFlash('message', 'УСПЕХ ЗАПИСИ!');
-        else Yii::$app->session->setFlash('message', 'ОШИБКА ЗАПИСИ!');
+     //   if (
+                $model1->validate(); 
+                //&& 
+                $model1->save();
+                /*) Yii::$app->session->setFlash('message', 'УСПЕХ ЗАПИСИ!');
+        else Yii::$app->session->setFlash('message', 'ОШИБКА ЗАПИСИ!');*/
         
         return $this->render('view', ['model' => $model, 'model1' => $model1]);
     }
@@ -323,6 +401,11 @@ class ZakazController extends Controller
         
         if ($model->load(Yii::$app->request->post())) {
             
+            if (!$model->shirota || !$model->dolgota) {
+                $region = VidRegion::findOne(['id' => Yii::$app->session->get('id_region')]);
+                $model->dolgota = $region->dolgota;
+                $model->shirota = $region->shirota;
+            }
             $model->data_registry = date('Y-m-d');
             $model->shirota_change = rand(-1500, 1500)/1000000 + $model->shirota;
             $model->dolgota_change = rand(-1500, 1500)/1000000 + $model->dolgota;
@@ -340,12 +423,12 @@ class ZakazController extends Controller
                 if ($model2->validate() && $model2->save()) Yii::$app->session->setFlash('message', 'УСПЕХ ЗАПИСИ!');
                 else Yii::$app->session->setFlash('message', 'ОШИБКА ЗАПИСИ!');
                 
-                return $this->redirect(['/klient-vs-zakaz/create', 'id_zakaz' => $model->id]);
+                return $this->redirect(['/client-order-master/create-client-order', 'id_order' => $model->id]);
             }
         }
 
         return $this->render('create', [
-            'model' => $model, 'vid' => $this->getRelationTablesArray()
+            'model' => $model, 'vid' => Zakaz::getRelationTablesArray()
         ]);
     }
 
@@ -397,15 +480,17 @@ class ZakazController extends Controller
             $old = $this->findModel($id);
             
             if ($old->id_status_zakaz == VidStatusZakaz::ORDER_EXECUTES 
-                    || $old->id_status_zakaz == VidStatusZakaz::ORDER_REQUEST_REJECTION) {
+                    || $old->id_status_zakaz == VidStatusZakaz::ORDER_REQUEST_REJECTION
+                    || $old->id_status_zakaz == VidStatusZakaz::ORDER_EXECUTED) {
                 
                 $model->id_status_zakaz = $old->id_status_zakaz;
                 Yii::$app->session->setFlash('message', 'Запрещено менять статус заявки если '
-                        . 'она выполняется или идет запрос отказа от заявки, сначала удалите связку в таблице "Мастера и заявки"');
-            } elseif ($model->id_status_zakaz == VidStatusZakaz::ORDER_EXECUTES 
-                    || $model->id_status_zakaz == VidStatusZakaz::ORDER_REQUEST_REJECTION) {
+                        . 'она выполняется, или уже выполнена, или идет запрос отказа от заявки, сначала удалите связку в таблице "Мастера и заявки"');
+            } elseif (//$model->id_status_zakaz == VidStatusZakaz::ORDER_EXECUTES || 
+                    $model->id_status_zakaz == VidStatusZakaz::ORDER_REQUEST_REJECTION 
+                    || $model->id_status_zakaz == VidStatusZakaz::ORDER_REQUEST_TAKE) {
                 $model->id_status_zakaz = $old->id_status_zakaz;
-                Yii::$app->session->setFlash('message', 'Запрещено менять статус заявки на "выполняется" или "запрос отказа"');
+                Yii::$app->session->setFlash('message', 'Запрещено менять статус заявки на "выполняется", или "запрос отказа", или "запрос взятия"');
             }
             
             if ($name) {
@@ -423,25 +508,25 @@ class ZakazController extends Controller
         return $this->render('update', [
             'model' => $model, 
             'model1' => $model1,
-            'vid' => $this->getRelationTablesArray()
+            'vid' => Zakaz::getRelationTablesArray()
         ]);
     }
-    
-    protected function getRelationTablesArray()
+   /* 
+    public static function getRelationTablesArray()
     {
         $vid = [];
-        $vid['vidNavik'] = VidNavik::find()->asArray()->all();        
-        $vid['vidStatusZakaz'] = VidStatusZakaz::find()->select(['id', 'name'])->asArray()->all();        
-        $vid['vidShag'] = VidShag::find()->asArray()->all();
+        $vid['vidNavik'] = VidNavik::find()->indexBy('id')->asArray()->all();        
+        $vid['vidStatusZakaz'] = VidStatusZakaz::find()->select(['id', 'name'])->indexBy('id')->asArray()->all();        
+        $vid['vidShag'] = VidShag::find()->indexBy('id')->asArray()->all();
         $vid['vidRegion'] = VidRegion::find()->select(['id', 'name'])
-                ->where('parent_id <> 0')->asArray()->all();
+                ->where('parent_id <> 0')->indexBy('id')->asArray()->all();
         
-        $vid['vidWork'] = VidWork::find()->asArray()->all();        
-        $vid['vidOcenka'] = VidOcenka::find()->asArray()->all();
+        $vid['vidWork'] = VidWork::find()->indexBy('id')->asArray()->all();        
+        $vid['vidOcenka'] = VidOcenka::find()->indexBy('id')->asArray()->all();
         
         return $vid;
     }
-
+*/
     /**
      * Deletes an existing Zakazi model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
@@ -453,8 +538,12 @@ class ZakazController extends Controller
     {
         $model1 = HistoryZakaz::createHistoryModel($id, VidStatusHistory::STATUS_DELETE);       
         
-        if ($model1->validate() && $model1->save()) Yii::$app->session->setFlash('message', 'УСПЕХ ЗАПИСИ!');
-        else Yii::$app->session->setFlash('message', 'ОШИБКА ЗАПИСИ!');
+      //  if (
+                $model1->validate();
+           //     && 
+                $model1->save();
+         //       ) Yii::$app->session->setFlash('message', 'УСПЕХ ЗАПИСИ!');
+     //   else Yii::$app->session->setFlash('message', 'ОШИБКА ЗАПИСИ!');
         
         $this->findModel($id)->delete();
 
@@ -500,11 +589,5 @@ class ZakazController extends Controller
             return $model;
         }
         throw new NotFoundHttpException('The requested page does not exist.');
-    }    
-    
-    public function actionLogout()
-    {
-        Yii::$app->user->logout();
-        return $this->redirect('/site/login');
-    }     
+    }   
 }

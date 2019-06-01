@@ -19,6 +19,7 @@ use common\models\VidStatusZakaz;
 use common\models\VidWork;
 use common\models\VidShag;
 use common\models\VidRegion;
+use common\models\ClientOrderMaster;
 
 /**
  * MasterVsZakazController implements the CRUD actions for MasterVsZakaz model.
@@ -71,7 +72,7 @@ class MasterVsZakazController extends Controller
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
-            'massFilters' => $this->getRelationTablesArray()
+            'massFilters' => ClientOrderMaster::getRelationTablesArray()
         ]);
     }
     
@@ -105,7 +106,7 @@ class MasterVsZakazController extends Controller
                         . ' WHERE z.id=' . $model->id_zakaz . ' AND m.id_master='
                         . $model->id_master)->execute();
                 
-                Yii::$app->db->createCommand('DELETE FROM master_vs_zakaz WHERE id=' . $id)->execute();
+            //    Yii::$app->db->createCommand('DELETE FROM master_vs_zakaz WHERE id=' . $id)->execute();
                 $transact->commit(); 
                 Yii::$app->session->setFlash('message', 'Успех изменения №' . $id);
             } catch (\Exception $e) {
@@ -305,19 +306,23 @@ GROUP BY m.id_master*/
         
         $change = VidChangeParametr::find()->limit(1)->one();
         $zakaz = Zakaz::find()->select(['cena', 'id_status_zakaz'])->where(['id' => $model->id_zakaz])->limit(1)->one();
-        $master = Master::find()->select(['balans', 'reyting'])->where(['id_master' => $model->id_master])->limit(1)->one();
-        $balans = $master->balans + (int)($zakaz->cena * $change->balans_add / 100);
         
-        if ($zakaz->id_status_zakaz == VidStatusZakaz::ORDER_REQUEST_REJECTION) {
-            $reyting = ', `reyting`=' . ($master->reyting - (int)($master->reyting * $change->reyting_delete / 100));
-        } else {
-            $reyting = '';
-        }        
+        if ($zakaz) {
+            $master = Master::find()->select(['balans', 'reyting'])->where(['id_master' => $model->id_master])->limit(1)->one();
+            $balans = $master->balans + (int)($zakaz->cena * $change->balans_add / 100);
 
-        $query[] = 'UPDATE `master` SET `balans`=' . $balans . $reyting . 
+            if ($zakaz->id_status_zakaz == VidStatusZakaz::ORDER_REQUEST_REJECTION) {
+                $reyting = ', `reyting`=' . ($master->reyting - (int)($master->reyting * $change->reyting_delete / 100));
+            } else {
+                $reyting = '';
+            }  
+            
+            $query[] = 'UPDATE `master` SET `balans`=' . $balans . $reyting . 
                 ' WHERE `id_master`=' . $model->id_master;
-        $query[] = 'UPDATE `zakaz` SET `id_status_zakaz`=' . VidStatusZakaz::ORDER_AVAILABLE 
+            $query[] = 'UPDATE `zakaz` SET `id_status_zakaz`=' . VidStatusZakaz::ORDER_AVAILABLE 
                 . ' WHERE `id`=' . $model->id_zakaz;
+        }
+        
         $query[] = 'DELETE FROM `master_vs_zakaz` WHERE id=' . $id;
                    
         $transaction = Yii::$app->db->beginTransaction();              
@@ -355,7 +360,7 @@ GROUP BY m.id_master*/
         throw new NotFoundHttpException('The requested page does not exist.');
     }
     
-    protected function getRelationTablesArray()
+   /* protected function getRelationTablesArray()
     {
         $vid = [];
         
@@ -366,5 +371,5 @@ GROUP BY m.id_master*/
                 ->where('parent_id <> 0')->asArray()->all();
         
         return $vid;
-    }   
+    }   */
 }

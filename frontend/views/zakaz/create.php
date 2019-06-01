@@ -61,11 +61,17 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= $form->field($model, 'data_start')->widget(DatePicker::class, [
         'language' => 'ru',
         'dateFormat' => 'yyyy-MM-dd',
+        'options' => [
+            'class' => 'form-control',
+        ],
     ]) ?>
 
     <?= $form->field($model, 'data_end')->widget(DatePicker::class, [
         'language' => 'ru',
         'dateFormat' => 'yyyy-MM-dd',
+        'options' => [
+            'class' => 'form-control',
+        ],
     ]) ?>
     
     <?php // map ?>

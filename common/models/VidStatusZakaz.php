@@ -21,6 +21,8 @@ class VidStatusZakaz extends \yii\db\ActiveRecord
     const ORDER_EXECUTED = 5;
     const ORDER_MASTER_INABILITY = 6;
     const ORDER_REQUEST_REJECTION = 7;
+    const ORDER_REQUEST_TAKE = 8;
+    const ORDER_REQUEST_EXECUTE = 9;
         
     /**
      * {@inheritdoc}

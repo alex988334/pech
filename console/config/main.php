@@ -30,7 +30,7 @@ return [
                 ],
             ],
         ],
-    /*    'db' => [
+ /*      'db' => [
             'class' => 'yii\db\Connection',
             'dsn' => 'mysql:host=localhost;dbname=admin_basemaster',
             'username' => 'admin_gradinas',

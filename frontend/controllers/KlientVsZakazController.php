@@ -13,6 +13,7 @@ use common\models\Klient;
 use common\models\Zakaz;
 use common\models\VidWork;
 use common\models\VidRegion;
+use common\models\ClientOrderMaster;
 
 /**
  * KlientVsZakazController implements the CRUD actions for KlientVsZakaz model.
@@ -65,7 +66,7 @@ class KlientVsZakazController extends Controller
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
-            'massFilters' => $this->getRelationTablesArray()
+            'massFilters' => ClientOrderMaster::getRelationTablesArray()
         ]);
     }
 

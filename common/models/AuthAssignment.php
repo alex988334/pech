@@ -45,4 +45,10 @@ class AuthAssignment extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
         ];
     }
+    
+    
+    public function getParamsRole()
+    {
+        return $this->hasOne(AuthItem::className(), ['name' => 'item_name']);
+    }
 }

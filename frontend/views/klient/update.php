@@ -7,11 +7,11 @@ use yii\helpers\ArrayHelper;
 /* @var $this yii\web\View */
 /* @var $model common\models\Klient */
 
-$this->title = 'Update Klient: ' . $model->id;
-$this->params['breadcrumbs'][] = ['label' => 'Klients', 
+$this->title = 'Обновление клиента: ' . $model->id;
+$this->params['breadcrumbs'][] = ['label' => 'Клиенты', 
     'url' => Yii::$app->urlManager->createUrl(['/klient/index', 'page' => Yii::$app->session->get('page') ?? '1'])];
 $this->params['breadcrumbs'][] = ['label' => $model->id, 'url' => ['view', 'id' => $model->id]];
-$this->params['breadcrumbs'][] = 'Update';
+$this->params['breadcrumbs'][] = 'Обновление';
 ?>
 <div class="klient-update">
 
@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = 'Update';
     
 
     <div class="form-group">
-        <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
+        <?= Html::submitButton('Сохранить', ['class' => 'btn btn-success']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

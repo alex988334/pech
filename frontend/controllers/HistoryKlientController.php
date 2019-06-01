@@ -19,6 +19,7 @@ use common\models\VidDefault;
 use common\models\VidRegion;
 use common\models\ManagerTableGrant;
 use common\models\VidStatusHistory;
+use common\models\Klient;
 
 /**
  * HistoryKlientController implements the CRUD actions for HistoryKlient model.
@@ -41,7 +42,7 @@ class HistoryKlientController extends Controller
                         'roles' => ['?', '@'],
                     ],
                     [                        
-                        'actions' => ['index', 'create'],
+                        'actions' => ['index', 'create', 'recovery'],
                         'allow' => true,
                         'roles' => ['head_manager', 'manager'],
                     ],                
@@ -79,11 +80,38 @@ class HistoryKlientController extends Controller
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
             'fields' => $fields,
-            'massFilters' => $this->getRelationTablesArray()
+            'massFilters' => HistoryKlient::getRelationTablesArray()
         ]);
     }
     
-    protected function getRelationTablesArray()
+    public function actionRecovery()
+    {
+        if ($id = Yii::$app->request->post('id')) {
+            
+            $hKlient = HistoryKlient::findOne(['id' => $id]);
+
+            $klient = new Klient();
+            $klient->scenario = Master::SCENARIO_RECOVERY;
+
+            $klient->setAttributes($hKlient->attributes);
+            $klient->id = '';
+            
+            try {
+                if ($klient->validate() && $klient->save()) {
+                    Yii::$app->session->setFlash('message', 'Успех! №' . $klient->id);
+                } else {
+                    Yii::$app->session->setFlash('message', 'Error! №' . $klient->id . ', причина - ' . current(current($klient->errors)));
+                }
+            } catch (\yii\db\IntegrityException $ex) {
+                Yii::$app->session->setFlash('message', 'Error! №' . $klient->id . ', причина - ' . $ex->getMessage());
+            }            
+        }
+        
+        return $this->redirect(['index', 'page' => Yii::$app->session->get('page') ?? '1']);
+    }
+    
+    
+   /* protected function getRelationTablesArray()
     {
         $vid = [];        
         $vid['vidStatusHistory'] = VidStatusHistory::find()->select(['id', 'name'])->asArray()->all();          
@@ -92,5 +120,5 @@ class HistoryKlientController extends Controller
                 ->where('parent_id <> 0')->asArray()->all();
         
         return $vid;
-    }
+    }*/
 }

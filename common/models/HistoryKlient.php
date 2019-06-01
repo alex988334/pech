@@ -140,4 +140,14 @@ class HistoryKlient extends \yii\db\ActiveRecord
         return $model;
     }
     
+    public static function getRelationTablesArray()
+    {
+        $vid = [];        
+        $vid['vidStatusHistory'] = VidStatusHistory::find()->select(['id', 'name'])->asArray()->all();          
+        $vid['vidStatusOnOff'] = VidDefault::find()->select(['id', 'name'])->asArray()->all();        
+        $vid['vidRegion'] = VidRegion::find()->select(['id', 'name'])
+                ->where('parent_id <> 0')->asArray()->all();
+        
+        return $vid;
+    }
 }

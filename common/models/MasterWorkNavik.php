@@ -73,4 +73,13 @@ class MasterWorkNavik extends \yii\db\ActiveRecord
     {
         return $this->hasOne(VidNavik::className(), ['id' => 'id_vid_navik']);
     }
+    
+    public static function getRelationTablesArray()
+    {
+        $vid = [];
+        $vid['vidWork'] = VidWork::find()->asArray()->all();
+        $vid['vidNavik'] = VidNavik::find()->asArray()->all();
+        
+        return $vid;
+    }
 }

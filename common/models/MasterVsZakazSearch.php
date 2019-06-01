@@ -71,6 +71,7 @@ class MasterVsZakazSearch extends MasterVsZakaz
                     'name' => 'zakaz.name',
                     'opisanie',
                     'vid_work_name' => 'vid_work.name',
+                    'id_status_zakaz',
                     'status_zakaz_name' => 'vid_status_zakaz.name',
                     'shag_name' => 'vid_shag.name'
                 ])

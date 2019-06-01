@@ -6,7 +6,7 @@
  * and open the template in the editor.
  */
 
-namespace common\models;
+namespace common\models\responseData;
 
 //use Yii;
 //use yii\base\Model;
@@ -19,33 +19,17 @@ namespace common\models;
 class Message {    
     
     /** 
-     * @var int $operation     *  
-     */    
-    public $operation;
-    /** 
-     * @var int $status     *  
-     */    
-    public $status;
-    /** 
-     * @var str $s_message     *  
+     * @var int $id     *  
      */ 
-    public $s_message;
-    /** 
-     * @var int $s_code     *  
-     */ 
-    public $s_code;
+    public $id; 
     /** 
      * @var int $id_chat     *  
      */ 
-    public $id_chat;
-    /** 
-     * @var int $id     *  
-     */ 
-    public $id;    
+    public $idChat;
     /**
      * @var int $parent_id      *
      */
-    public $parent_id;
+    public $parentId;
     /** 
      * @var str $autor     *  
      */     
@@ -53,15 +37,15 @@ class Message {
     /** 
      * @var int $id_autor     *  
      */     
-    public $id_autor;
-    /** 
-     * @var int $id_user     *  
-     */     
-    public $id_user;
+    public $idAuthor;
     /** 
      * @var str $message     *  
      */     
     public $message;
+    /** 
+     * @var int $m_status     *  
+     */ 
+    public $mStatus;
     /** 
      * @var str $date     *  
      */     
@@ -73,9 +57,8 @@ class Message {
     /** 
      * @var str $file     *  
      */ 
-    public $file;   
-    
-    
+    public $file;  
+        
     
     /**
      * 

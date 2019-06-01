@@ -37,7 +37,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 'label' => '№ клиента',
                 'value' => function($data){
                     return Html::a($data['id_klient'], 
-                            Yii::$app->urlManager->createUrl(['/klient/index', 'id_klient' => $data['id_klient']]));                    
+                            Yii::$app->urlManager->createUrl(['/klient/index', 'id_klient' => $data['id_klient']]),
+                            ['title' => 'переход к клиентам']);                    
                 }            
             ],             
             [                  
@@ -61,7 +62,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 'label' => '№ заявки',
                 'value' => function($data){
                     return Html::a($data['id_zakaz'], 
-                            Yii::$app->urlManager->createUrl(['/zakaz/index', 'id' => $data['id_zakaz']]));                    
+                            Yii::$app->urlManager->createUrl(['/zakaz/index', 'id' => $data['id_zakaz']]),
+                            ['title' => 'переход к заявкам']);                    
                 }            
             ],                         
             [                  

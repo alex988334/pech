@@ -93,7 +93,7 @@ class KlientController extends Controller
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
             'fields' => $fields,
-            'massFilters' => $this->getRelationTablesArray()
+            'massFilters' => Klient::getRelationTablesArray()
         ]);
     }
     
@@ -261,7 +261,7 @@ class KlientController extends Controller
         }
 
         return $this->render('update', [
-            'model' => $model, 'vid' => $this->getRelationTablesArray()
+            'model' => $model, 'vid' => Klient::getRelationTablesArray()
         ]);
     }
 
@@ -307,15 +307,13 @@ class KlientController extends Controller
         throw new NotFoundHttpException('The requested page does not exist.');
     }
     
-    protected function getRelationTablesArray()
+   /* public static function getRelationTablesArray()
     {
-        $vid = [];
-        
-        $vid['vidStatusOnOff'] = VidDefault::find()->select(['id', 'name'])->asArray()->all();
-        
+        $vid = [];        
+        $vid['vidStatusOnOff'] = VidDefault::find()->select(['id', 'name'])->asArray()->all();        
         $vid['vidRegion'] = VidRegion::find()->select(['id', 'name'])
-                ->where('parent_id <> 0')->asArray()->all();
+                ->where('parent_id <> 0')->indexBy('id')->asArray()->all();
         
         return $vid;
-    }
+    }*/
 }

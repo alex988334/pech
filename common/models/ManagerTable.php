@@ -29,7 +29,7 @@ class ManagerTable extends \yii\db\ActiveRecord
     {
         return [
             [['name'], 'required'],
-            [['parent'], 'integer'],
+            [['parent', 'clone_by'], 'integer'],
             [['name', 'alias'], 'string', 'max' => 50],
         ];
     }
@@ -44,6 +44,7 @@ class ManagerTable extends \yii\db\ActiveRecord
             'name' => 'Название поля или таблицы',
             'parent' => '№ родительской категории',
             'alias' => 'Псевдоним',
+            'clone_by' => '№ клонируемой таблицы'
         ];
     }
     

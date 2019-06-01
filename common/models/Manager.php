@@ -106,4 +106,13 @@ class Manager extends \yii\db\ActiveRecord
     {
         return $this->hasMany(ManagerTableGrant::className(), ['id_manager' => 'id_manager']);
     }
+    
+    public static function getRelationTablesArray()
+    {
+        $vid = [];
+        $vid['vidRegion'] = VidRegion::find()->select(['id', 'name'])
+                ->where('parent_id <> 0')->indexBy('id')->asArray()->all();
+        
+        return $vid;
+    }
 }

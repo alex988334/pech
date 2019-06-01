@@ -18,6 +18,7 @@ $this->title = 'Чат';
     if (isset($users)) debugArray($users);
    
  // */
+//debugArray($res);
 ?>
 
 <div class="chat-index">
@@ -31,8 +32,8 @@ $this->title = 'Чат';
         <div class="contacts-panel" id="contacts_panel">
             <div class="control-panel" id="control_panel">
                 <div id="new_chat" class="control-panel-button" onclick="createFindUserDialog()" title="Новый чат"><img src="/images/new32.png"></div>
-                <div id="leave_chat" class="control-panel-button" onclick="exitChat()" title="Покинуть чат"><img src="/images/leave32.png"></div>
-                <div id="delete_chat" class="control-panel-button" onclick="deleteChat()" title="Удалить чат"><img src="/images/delete32.png"></div>
+                <div id="leave_chat" class="control-panel-button" onclick="createExitChatDialog()" title="Покинуть чат"><img src="/images/leave32.png"></div>
+                <div id="delete_chat" class="control-panel-button" onclick="createDeleteChatDialog()" title="Удалить чат"><img src="/images/delete32.png"></div>
                 <div id="show_users" class="control-panel-button" onclick="createUsersOfChatDialog()" title="Список участников чата">
                     <img src="/images/list_users32.png">
                 </div>
@@ -84,57 +85,9 @@ $this->title = 'Чат';
                     . '</div>';*/
             }    
             
-            $js = 'securityWebSocket();            
-                $(window).on("load", function() {
+       /*     $js = 'securityWebSocket();            
                 
-                    var scroll = 0;
-                 
-                    if ($(".chat-user").length > 0) getHistoryChat(($(".chat-user"))[0]);                            
-                    
-                    if ("onwheel" in document) {
-                        // IE9+, FF17+, Ch31+
-                        $(".message-container")[0].addEventListener("wheel", function(){ messageContainerScroll(this);});
-                    } else if ("onmousewheel" in document) {
-                        // устаревший вариант события
-                        $(".message-container")[0].addEventListener("mousewheel", function(){ messageContainerScroll(this);});
-                    } else {
-                        // Firefox < 17                        
-                        $(".message-container")[0].addEventListener("MozMousePixelScroll", function(){ messageContainerScroll(this);});
-                    }                    
-                  
-                    $(".chat-user").mouseenter(function(){
-                        this.style.width="285px";
-                        this.style.height="65px";
-                        this.style.boxShadow="7px 10px 1px 1px #999999, 0 0 20px 10px #cccccc";
-                    });
-                    $(".chat-user").mouseleave(function(){
-                        this.style.width="270px";
-                        this.style.height="40px";
-                        this.style.boxShadow="3px 4px 1px 0px #999999, 0 0 20px 10px #cccccc";
-                    });
-                    $(".control-panel-button").mouseenter(function(){
-                        ($(this).children("img"))[0].style.transition="box-shadow 0.5s";    
-                        ($(this).children("img"))[0].style.boxShadow="0 0 3px 3px white"; 
-                        this.style.backgroundColor="white";
-                    });
-                    $(".control-panel-button").mouseleave(function(){ 
-                        ($(this).children("img"))[0].style.transition="box-shadow 0.5s"; 
-                        ($(this).children("img"))[0].style.boxShadow="";
-                        this.style.backgroundColor="rgba(0, 0, 0, 0)";
-                    });
-                    
-                    ($("#editor"))[0].addEventListener("keydown", function(e) {
-                        if (e.keyCode === 13) {
-                            sendMessage();
-                        }
-                    });                   
-                    
-                    $("#editor").on("input",function(ev){
-                        userWrite();
-                    });
-                });
-            ';
-            
+            ';*/
             $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
             
           /*  $this->registerJs('let userName = "' . \common\models\User::find()->select(['username'])
@@ -148,7 +101,7 @@ $this->title = 'Чат';
          /*   $this->registerJsFile('@web/js/messenger.js', [
                     'dependst' => 'yii\web\YiiAsset',
                     'position' => View::POS_END]); */
-            $this->registerJs($js, yii\web\View::POS_END); 
+     //       $this->registerJs($js, yii\web\View::POS_END); 
             
         ?>
         

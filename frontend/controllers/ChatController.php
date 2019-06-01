@@ -33,9 +33,44 @@ use common\models\Message;
  */
 class ChatController extends Controller
 {
-    const NULL_MESSAGES = 1008;
     const STATUS_ACCEPT = 1;
     const STATUS_ERROR = 0;
+    
+    const ERROR_USER_NAME = 1001;    
+    const ERROR_WRITE_BASE = 1002;
+    const ERROR_SEND_MESSAGE = 1003; 
+    const ERROR_SEND_PARAMETR = 1004;
+    
+    const OP_STATUS_MESSAGE = 101;
+    const OP_INPUT_MESSAGE = 102;
+    const OP_OUTPUT_MESSAGE = 103;
+    const OP_SET_USER_NAME = 104;  
+    const OP_LIST_USERS = 105;
+    const OP_CREATE_NEW_CHAT = 106;
+    const OP_WRITEN = 107;
+    const OP_SYSTEM = 108;
+    const OP_ERROR_NAME = 109;
+    const OP_SEARCH_USER = 110;
+    const OP_GET_CHATS = 111;
+    const OP_GET_HISTORY_MESSAGE = 112;
+    const OP_EXIT_CHAT = 113;
+    const OP_REMOVE_USER = 114;
+    const OP_ADD_USER = 115;
+    const OP_REMOVE_CHAT = 116;
+    const OP_BLOCK_USERS = 117;
+    const OP_UNLOOCK_USERS = 118;
+    const OP_BLACK_LIST_USERS = 119;
+    
+    
+    const ZAKAZ_AKTIVATE = 150;
+    const ZAKAZ_DIAKTIVATE = 151;
+   
+    const NULL_MESSAGES = 1008;    
+    const MESSAGE_ALL = 1010;
+    
+    const MESSAGE_SEND = 111;
+    const MESSAGE_DELIVERED = 112;
+    const MESSAGE_READED = 113;
     
     /**
      * {@inheritdoc}
@@ -74,7 +109,11 @@ class ChatController extends Controller
     public function actionSaveFile()
     {   
         $model = new ChatImageForm();
-        $model->file = UploadedFile::getInstancesByName('file')[0];
+        $massFiles = UploadedFile::getInstancesByName('file');
+        if ($massFiles == null) {
+            return json_encode(['status' => self::STATUS_ERROR, 's_message' => 'Файлы не загружены']);  
+        }
+        $model->file = $massFiles[0];
         $model->id_chat = Yii::$app->request->post('id_chat');
           
         if (($name = $model->saveFile()) != null){            
@@ -89,16 +128,7 @@ class ChatController extends Controller
      * @return mixed
      */
     public function actionIndex()
-    {
-      /*  
-       * 
-      SELECT c.id_chat, u.username FROM chat_user c JOIN user u ON c.id_user=u.id WHERE c.id_chat IN (
-    SELECT c.id_chat FROM chat_user c LEFT JOIN (
-        SELECT t.id_chat, COUNT(m.id_user) AS total FROM chat_user m JOIN (
-            SELECT c.id_chat AS chat_id, c.id_user AS user_id, u.id_chat, u.id_user FROM chat_user c JOIN 							chat_user u ON c.id_chat=u.id_chat WHERE c.id_user=380 AND u.id_user IN (326, 376)
-        ) t ON t.id_chat=m.id_chat GROUP BY m.id_chat
-    ) o ON o.id_chat=c.id_chat WHERE c.id_user=380 AND (o.id_chat IS NULL OR o.total>2))
-*/
+    {      
         if (Yii::$app->user->isGuest) return $this->redirect ('/site/login');
         
         $blackList = ChatBlackList::find()->select(['locked'])
@@ -135,24 +165,7 @@ class ChatController extends Controller
                     )')
                     ->indexBy('id_chat')
                     ->asArray()->all();
-          /*
-           SELECT * FROM chat_message WHERE (id_chat, date, time) in 
-	(
-	select id_chat, date, MAX(time) from chat_message c
- 	where (id_chat, date) in
-       (
-         select id_chat, max(date)
-           		from chat_message WHERE id_chat IN (28, 29, 30)
-         group by id_chat
-       )
-    GROUP BY id_chat
-    )
-           */           
-            
-       /*     $messages = Yii::$app->db->createCommand('SELECT t1.* FROM chat_message t1 LEFT JOIN chat_message t2'
-                    . ' ON t1.id_chat = t2.id_chat AND t1.time < t2.time WHERE t2.id_chat IS NULL AND t1.id_chat'
-                    . ' IN (' . implode(' ,', $idChats) .')')->queryAll();*/
-            
+          
             $massUs = ArrayHelper::getColumn($messages, 'id_user');            
             $users = User::find()->select(['id', 'username'])->where(['id' => $massUs])->indexBy('id')->asArray()->all();
                         
@@ -160,40 +173,51 @@ class ChatController extends Controller
             return json_encode(["status" => self::STATUS_ERROR, "s_message" => 'Ошибка поиска в бд']);
         }
         
-      /*  $model = ChatUser::findBySql('SELECT c.id_chat, u.username FROM chat_user c 
-                JOIN user u ON c.id_user=u.id WHERE c.id_chat IN (
-                    SELECT c.id_chat FROM chat_user c LEFT JOIN (
-                        SELECT t.id_chat, COUNT(m.id_user) AS total FROM chat_user m JOIN (
-                            SELECT c.id_chat AS chat_id, c.id_user AS user_id, u.id_chat, u.id_user FROM chat_user c JOIN 							
-                                chat_user u ON c.id_chat=u.id_chat WHERE c.id_user='. Yii::$app->user->getId() 
-                              . $blocked  //  .' AND u.id_user IN ('. $blocked .')
-                        . ') t ON t.id_chat=m.id_chat GROUP BY m.id_chat
-                    ) o ON o.id_chat=c.id_chat WHERE c.id_user='. Yii::$app->user->getId() 
-                    .' AND (o.id_chat IS NULL OR o.total>2)  
-                )')                
-                ->asArray()
-                ->all();        
-        $array = [];
-        foreach($model as $one){
-            if (!key_exists($one['id_chat'], $array)) { 
-                $array[$one['id_chat']] = $one['username'];                 
-            } else {
-                $array[$one['id_chat']] =  $array[$one['id_chat']] . ', ' . $one['username'];
-            }            
-        }        
-        
         /**/
-     
+        $master = Yii::$app->db->createCommand('SELECT id_master, CONCAT(familiya, " ", imya, " "'
+                        . ', otchestvo) AS fio FROM master WHERE id_master=' . 25)->queryOne();
+                
+        $managerId = Yii::$app->db->createCommand('SELECT mg.id_manager FROM `manager` mg, master m, auth_assignment a '
+                . ' WHERE m.id_region=mg.id_region AND a.user_id=mg.id_manager AND a.item_name="'
+                . AuthItem::MANAGER . '" AND m.id_master=' . 25)->queryScalar();
+
+        $chatId = Yii::$app->db->createCommand('SELECT c.id_chat FROM chat_user c LEFT JOIN chat_user u '
+                . 'ON c.id_chat=c.id_chat WHERE c.id_user=0 AND u.id_user=' . $managerId)->queryScalar();
+
+        $date = date('Y-m-d');
+        
+        $chat = new Chat();
+        $chat->autor = 0;
+        $chat->alias = 'System';
+        $chat->create_at = $date;
+        $chat->status = Chat::CHAT_ACTIVE;
+
+        $chat->save();
+        
+        $message = new ChatMessage();
+        
+        $message->id_chat = ($chatId != NULL) ? $chatId : $chat->id;
+        $message->id_user = 0;
+        
+        $strM = 'Запрос мастера №'. $master['id_master'] 
+                   . ' '. $master['fio'] . ' на взятие заявки №' . 1 ;
+               
+          
+        $message->message = $strM;
+        $message->date = $date;
+        $message->time = date('H:i:s'); 
+        $flag = ($message->validate() && $message->save());
+        
         /**/
         return $this->render('index', [
             'chats' => $chats,
             'messages' => $messages,
-            'users' => $users,
-     //       'list' => $res 
+            'users' => $users,  
+            'res' => [$chatId, $chat->id, $flag, $chat, $message]
         ]);       
     }
     
-        
+     /*   
     public function actionUnlockUsers()
     {
         if (!$idUsers = Yii::$app->request->post('users')) {
@@ -245,8 +269,8 @@ class ChatController extends Controller
         return json_encode(['status' => self::STATUS_ACCEPT, 's_message' => 'Пользователи успешно добавлены в черный список']);
     }
 
-    
-    public function actionHistoryMessage()
+    */
+   /* public function actionHistoryMessage()
     {
         if (!Yii::$app->request->isAjax) return $this->redirect ('/site/login');
         
@@ -297,7 +321,7 @@ class ChatController extends Controller
     }
 
     
-    public function actionSearchUser(){
+/*    public function actionSearchUser(){
                    
         if (!Yii::$app->request->isAjax) return;
      
@@ -340,50 +364,9 @@ class ChatController extends Controller
         } 
         
         return json_encode(["status" => self::STATUS_ERROR, "s_message" => 'Не найдено совпадений']);
-    }
+    }*/
     
-   
-
-    /**
-     * Creates a new Chat model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return mixed
-     */
-   /* public function actionCreateChat()
-    {
-        if (!Yii::$app->request->isAjax) return;
-        
-        $data = Yii::$app->request->post('data');  
-        
-        if (!(isset($data['chat_name']) && $name = trim($data['chat_name']))){
-            return json_encode(['status' => self::STATUS_ERROR, 's_message' => 'Название чата пусто']);
-        }
-        if (!(isset($data['users']) && count($data['users']) > 0)){
-            return json_encode(['status' => self::STATUS_ERROR, 's_message' => 'Не указаны пользователи']);
-        }
-        
-        $chat = new Chat();
-        $chat->autor = Yii::$app->user->getId();
-        $chat->create_at = date('Y-m-d');
-        $chat->status = Chat::CHAT_ACTIVE;
-        if (strlen($name) > 30) $name = substr($name, 0, 30);
-        $chat->alias = $name;
-        
-        $data['users'][] = $chat->autor;
-        if ($chat->save()) {
-            foreach($data['users'] as $one) {
-                $chatUser = new ChatUser();
-                $chatUser->id_chat = $chat->id;
-                $chatUser->id_user = $one;
-                
-                $chatUser->save();
-            }
-        }
-        
-        return json_encode(['status' => self::STATUS_ACCEPT, 'id' => $chat->id, 'name' => $name]);
-    }
-// */
-        
+   /*
     public function actionRemoveChat()
     {
         if (!$id = Yii::$app->request->post('id')) {

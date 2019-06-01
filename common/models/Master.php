@@ -32,6 +32,8 @@ class Master extends \yii\db\ActiveRecord
     const SCENARIO_UPDATE_MANAGER = 'update_manager';
     const SCENARIO_UPDATE_HEAD_MANAGER = 'update_head_manager';
     const SCENARIO_CREATE = 'create';
+    const SCENARIO_RECOVERY = 'recovery';
+    
     
     /**
      * {@inheritdoc}
@@ -82,7 +84,13 @@ class Master extends \yii\db\ActiveRecord
             self::SCENARIO_CREATE => [
                 'id_master', 'familiya', 'imya', 'otchestvo', 'vozrast', 'staj', 
                 'id_status_work', 'phone', 'mesto_jitelstva', 'mesto_raboti'                
-                ],
+            ],
+            self::SCENARIO_RECOVERY => [
+                'id', 'id_master', 'familiya', 'imya', 'otchestvo', 'id_status_on_off',
+                'vozrast', 'staj', 'reyting', 'id_status_work', 'data_registry',
+                'data_unregistry', 'phone', 'mesto_jitelstva', 'mesto_raboti', 'balans',
+                'id_region', 'limit_zakaz', 'old_id',
+            ],
         ];
     }
     
@@ -168,7 +176,12 @@ class Master extends \yii\db\ActiveRecord
      */
     public function getMasterVsZakaz()
     {
-        return $this->hasMany(MasterVsZakaz::className(), ['id_master' => 'id_master']);
+        return $this->hasMany(MasterVsZakaz::className(), ['id_master' => 'id_master']); 
+    }
+    
+    public function getZakaz()
+    {
+        return $this->hasMany(Zakaz::className(), ['id' => 'id_zakaz'])->via('masterVsZakaz');
     }
     
     public function createNew()
@@ -180,5 +193,16 @@ class Master extends \yii\db\ActiveRecord
             return false;
         } 
         return true;
+    }
+    
+    public static function getRelationTablesArray()
+    {
+        $vid = [];
+        $vid['vidStatusOnOff'] = VidDefault::find()->indexBy('id')->asArray()->all();
+        $vid['vidStatusWork'] = VidStatusWork::find()->indexBy('id')->asArray()->all();
+        $vid['vidRegion'] = VidRegion::find()->select(['id', 'name'])
+                ->where('parent_id <> 0')->indexBy('id')->asArray()->all();
+        
+        return $vid;
     }
 }

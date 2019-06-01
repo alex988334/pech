@@ -3,9 +3,6 @@
 namespace frontend\controllers;
 
 use Yii;
-use yii\data\Pagination;
-use yii\base\InvalidParamException;
-use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
@@ -18,20 +15,22 @@ use common\models\Zakaz;
 use common\models\VidStatusWork;
 use common\models\VidDefault;
 use common\models\VidRegion;
+use common\models\VidStatusZakaz;
 use common\models\VidInitializationMaster;
 use common\models\VidStatusHistory;
-use yii\data\ActiveDataProvider;
 use frontend\models\SignupForm;
 use frontend\models\UpdateForm;
 use common\models\User;
 use common\models\AuthAssignment;
-use common\models\AuthItem;
 use common\models\ManagerTableGrant;
 use common\models\HistoryMaster;
+use yii\helpers\ArrayHelper;
 
 class MasterController extends Controller 
 {
-   
+    const STATUS_ACCEPT = 1;
+    const STATUS_ERROR = 0;
+    
     /**
      * {@inheritdoc}
      */
@@ -115,39 +114,60 @@ class MasterController extends Controller
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
             'fields' => $fields,
-            'massFilters' => $this->getRelationTablesArray(),       
+            'massFilters' => Master::getRelationTablesArray(),       
         ]);
     }    
     
     public function actionKabinet()
     {   
-        $model = Master::find()
-                ->with('region', 'statusOnOff', 'statusWork', 'masterVsZakaz', 'user')                  
-                ->where(['id_master' => Yii::$app->user->getId()])
+        $model = Master::find()                                 
+                ->where(['id_master' => Yii::$app->user->getId()])   
+                ->with('region', 'statusOnOff', 'statusWork', 'user', 'masterVsZakaz') 
                 ->limit(1) 
                 ->asArray()
-                ->one();            
+                ->one(); 
+        
+    /*    $model = Yii::$app->db->createCommand('SELECT ')*/
+        
+        if (empty($model)) {
+            Yii::$app->user->logout();
+            Yii::$app->session->setFlash('message', 'Вы не найдены в системе, свяжитесь с менеджером');
+            return $this->redirect('/site/login');
+        }
+        
         return $this->render('kabinet', ['model' => $model]);
     }
         
     public function actionVashiZakazi()
-    {        
-        
+    {       
         $zakaz = MasterVsZakaz::find()
                 ->select('id_zakaz')                
                 ->where(['id_master' => Yii::$app->user->getId()])             
                 ->asArray()
                 ->all();    
         if (count($zakaz) > 0){
+            $id = ArrayHelper::getColumn($zakaz, 'id_zakaz');
             foreach ($zakaz as $value) { $mass[] = $value['id_zakaz']; }       
-            $model = Zakaz::find()
-                    ->where(['id' => $mass])
+            $takeOrders = Zakaz::find()
+                    ->where(['id' => $id, 'id_status_zakaz' => VidStatusZakaz::ORDER_REQUEST_TAKE])
                     ->with('vidWork', 'navik', 'statusZakaz', 'shag', 'region', 'klient')
                     ->asArray()
                     ->all();
-        } else { $model = []; }
+            $model = Zakaz::find()
+                    ->where(['id' => $id, 'id_status_zakaz' => [
+                        VidStatusZakaz::ORDER_REQUEST_REJECTION, VidStatusZakaz::ORDER_EXECUTES
+                    ]])
+                    ->with('vidWork', 'navik', 'statusZakaz', 'shag', 'region', 'klient')
+                    ->asArray()
+                    ->all();
+            /*$executesOrders = Zakaz::find()
+                    ->where(['id' => $id, 'id_status_zakaz' => VidStatusZakaz::ORDER_EXECUTES])
+                    ->with('vidWork', 'navik', 'statusZakaz', 'shag', 'region', 'klient')
+                    ->asArray()
+                    ->all();*/
+        } else { $takeOrders = $model = []; }
        
-        return $this->render('vashiZakazi', ['model' => $model]);
+        return $this->render('vashiZakazi', ['takeOrders' => $takeOrders, 'model' => $model]);
     }  
     
     
@@ -196,7 +216,7 @@ class MasterController extends Controller
                 } else {
                     $id = User::find()->select(['id'])->where(['username' => $model->username])->limit(1)->scalar();
                     $model1->id_master = $id;
-                    return $this->render('create', ['model' => $model1, 'vid' => $this->getRelationTablesArray()]);                    
+                    return $this->render('create', ['model' => $model1, 'vid' => Master::getRelationTablesArray()]);                    
                 }
             } 
             
@@ -205,7 +225,7 @@ class MasterController extends Controller
                 $id = User::find()->select(['id'])->where(['username' => $model->username])->limit(1)->scalar();
                 Yii::$app->db->createCommand('UPDATE `user` SET `updated_at`=1 WHERE `id`=' . $id)->execute();
                 $model1->id_master = $id;
-                return $this->render('create', ['model' => $model1, 'vid' => $this->getRelationTablesArray()]);
+                return $this->render('create', ['model' => $model1, 'vid' => Master::getRelationTablesArray()]);
             }            
         }
         
@@ -242,7 +262,7 @@ class MasterController extends Controller
                     return $this->redirect(['index']);
                 }
             } else {
-                return $this->render('create', ['model' => $model1, 'vid' => $this->getRelationTablesArray()]);                    
+                return $this->render('create', ['model' => $model1, 'vid' => Master::getRelationTablesArray()]);                    
             }  
         }
         $model->password = '';
@@ -300,7 +320,7 @@ class MasterController extends Controller
         }
 
         return $this->render('update', [
-            'model' => $model, 'vid' => $this->getRelationTablesArray()
+            'model' => $model, 'vid' => Master::getRelationTablesArray()
         ]);
     }
 
@@ -342,16 +362,16 @@ class MasterController extends Controller
         throw new NotFoundHttpException('The requested page does not exist.');
     }
     
-    protected function getRelationTablesArray()
+    /*public static function getRelationTablesArray()
     {
         $vid = [];
-        $vid['vidStatusOnOff'] = VidDefault::find()->asArray()->all();
-        $vid['vidStatusWork'] = VidStatusWork::find()->asArray()->all();
+        $vid['vidStatusOnOff'] = VidDefault::find()->indexBy('id')->asArray()->all();
+        $vid['vidStatusWork'] = VidStatusWork::find()->indexBy('id')->asArray()->all();
         $vid['vidRegion'] = VidRegion::find()->select(['id', 'name'])
-                ->where('parent_id <> 0')->asArray()->all();
+                ->where('parent_id <> 0')->indexBy('id')->asArray()->all();
         
         return $vid;
-    }
+    }*/
     
     public function actionChangePassword()
     {

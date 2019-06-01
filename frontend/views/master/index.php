@@ -14,9 +14,9 @@ use common\widgets\ShowFields;
 $this->title = 'Мастера';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="master-index">
-    
-    <?php Pjax::begin(); ?>
+
+<div class="master-index">    
+    <?php //Pjax::begin(); ?>
     <p>
         <?= $r = (Yii::$app->session->get('role') == 'manager') 
             ? Html::a('Добавить нового мастера', ['create'], 
@@ -39,6 +39,21 @@ $this->params['breadcrumbs'][] = $this->title;
                 ];
                 $last = count($massColums) - 1;
                 switch ($one['name']){ 
+                    case 'id_master':
+                        $massColums[$last]['format'] = 'raw';
+                        $massColums[$last]['value'] = function ($data) {
+                            return Html::a($data['id_master'], ['/site/user'], 
+                                    [
+                                        'title' => 'Пользователи',
+                                        'data' => [
+                                            'method' => 'get', 
+                                            'params' => [
+                                                'id' => $data['id_master'],
+                                            ]
+                                        ]
+                                    ]);                        
+                        };
+                        break;
                     case 'id_status_on_off': 
                         $massColums[$last]['attribute'] = 'status_on_off_name';                   
                         $massColums[$last]['label'] = 'Статус подключения';
@@ -53,7 +68,31 @@ $this->params['breadcrumbs'][] = $this->title;
                         $massColums[$last]['attribute'] = 'region_name';                   
                         $massColums[$last]['label'] = 'Регион';
                         $massColums[$last]['filter'] = ArrayHelper::map($massFilters['vidRegion'], 'name', 'name');
-                        break;                                                      
+                        break; 
+                    case 'data_registry':
+                        $massColums[$last]['format'] = ['date', 'php:d-m-Y'];
+                        $massColums[$last]['filter'] = yii\jui\DatePicker::widget([                
+                            'model' => $searchModel,
+                            'attribute' => 'data_registry',
+                            'language' => 'ru',
+                            'dateFormat' => 'dd-MM-yyyy',
+                            'options' => [
+                                'class' => 'form-control',
+                            ],
+                        ]);  
+                        break; 
+                    case 'data_unregistry':
+                        $massColums[$last]['format'] = ['date', 'php:d-m-Y'];
+                        $massColums[$last]['filter'] = yii\jui\DatePicker::widget([                
+                            'model' => $searchModel,
+                            'attribute' => 'data_unregistry',
+                            'language' => 'ru',
+                            'dateFormat' => 'dd-MM-yyyy',
+                            'options' => [
+                                'class' => 'form-control',
+                            ],
+                        ]);
+                        break; 
                 }
             } 
             $massColums[] = [
@@ -74,19 +113,19 @@ $this->params['breadcrumbs'][] = $this->title;
                     },
                     'zakaz' => function ($url, $model) {  
                         return Html::a('<span class="glyphicon glyphicon-paperclip"></span>', 
-                            ['/master-vs-zakaz/index'], 
+                            ['/client-order-master/index'], 
                             [
                                 'title' => 'Прикрепленные заявки',
                                 'data' => [
-                                    'method' => 'get',                                
+                                    'method' => 'post',                                
                                     'params' => [
                                         'id_master'=> $model['id_master'],                                  
                                     ]
                                 ]
                             ]);                        
                     },
-                    'reset-password' => function ($url, $model) {  
-                        return Html::a('<span class="glyphicon glyphicon-paperclip"></span>', 
+                 /*   'reset-password' => function ($url, $model) {  
+                        return Html::a('<span class="glyphicon glyphicon-exclamation-sign"></span>', 
                             ['/master/reset-password'], 
                             [
                                 'title' => 'Сброс пароля мастера',
@@ -98,9 +137,9 @@ $this->params['breadcrumbs'][] = $this->title;
                                     ]
                                 ]
                             ]);                        
-                    },
+                    },*/
                 ],
-                'template' => '{view} {update} {delete} {navik} {zakaz} {reset-password}',
+                'template' => '{view} {update} {delete} {navik} {zakaz}', //{reset-password}
             ];        
             $gridView['filterModel'] = $searchModel;  
             $gridView['columns'] = $massColums;
@@ -108,21 +147,28 @@ $this->params['breadcrumbs'][] = $this->title;
     ?>
     
     <?= GridView::widget($gridView); ?>   
-    <?php Pjax::end(); ?>
+    <?php // Pjax::end(); ?>
     <?php 
+  /*  debugArray(array(0, 1, 2));
+    debugArray([0, 1, 2]);
+    debugArray(['0' => 0, '1' => 1, '2' => 2]);
+    debugArray($fields);
+    // */
+    
         if ($fields != null) {
             echo ShowFields::widget (['fields' => $fields]); 
             $this->registerJsFile('@web/js/select_fields.js', [
                 'dependst' => 'yii\web\YiiAsset',
                 'position' => View::POS_END]);                
-            $this->registerJs(
+         /*   $this->registerJs(
                 'massChange = []; $("#selectedFields").children("input").each(function (index, value){
                 this.onclick = function(elem) { 
                 var one = $(massChange).filter(function (i, k){ return k[0] == elem.target.id; });
                 if (one.length != 0) { if (elem.target.checked) one[0].visible = 1; else one[0].visible = 0; 
                 } else massChange.push({id: elem.target.id, visible: elem.target.checked});};});',
                 View::POS_READY
-            );
+            );*/
         }
-    ?>
+      //  */
+    ?>    
 </div>

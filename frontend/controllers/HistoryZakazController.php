@@ -17,6 +17,7 @@ use common\models\VidRegion;
 use common\models\VidOcenka;
 use common\models\VidStatusZakaz;
 use common\models\VidShag;
+use common\models\Zakaz;
 
 /**
  * HistoryZakazController implements the CRUD actions for HistoryZakaz model.
@@ -39,7 +40,7 @@ class HistoryZakazController extends Controller
                         'roles' => ['?', '@'],
                     ],
                     [                        
-                        'actions' => ['index', 'create'],
+                        'actions' => ['index', 'create', 'recovery'],
                         'allow' => true,
                         'roles' => ['head_manager', 'manager'],
                     ],                
@@ -77,11 +78,31 @@ class HistoryZakazController extends Controller
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
             'fields' => $fields,
-            'massFilters' => $this->getRelationTablesArray()
+            'massFilters' => HistoryZakaz::getRelationTablesArray()
         ]);
     }
     
-    protected function getRelationTablesArray()
+    public function actionRecovery()
+    {
+        if ($id = Yii::$app->request->post('id')) {
+            
+            $hZakaz = HistoryZakaz::findOne(['id' => $id]);
+
+            $order = new Zakaz();
+            $order->scenario = Zakaz::SCENARIO_RECOVERY;
+
+            $order->setAttributes($hZakaz->attributes);
+            if ($order->validate() && $order->save()) {
+                Yii::$app->session->setFlash('message', 'Успех! №' . $order->id);
+            } else {
+                Yii::$app->session->setFlash('message', 'Error! №' . $order->id . ', причина - ' . current(current($order->errors)));
+            }
+        }
+        
+        return $this->redirect(['index', 'page' => Yii::$app->session->get('page') ?? '1']);
+    }
+    
+    /*public static function getRelationTablesArray()
     {
         $vid = [];
         $vid['vidStatusHistory'] = VidStatusHistory::find()->asArray()->all();   
@@ -95,5 +116,5 @@ class HistoryZakazController extends Controller
         $vid['vidOcenka'] = VidOcenka::find()->asArray()->all();
         
         return $vid;
-    }
+    }*/
 }

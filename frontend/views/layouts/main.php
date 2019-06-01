@@ -10,6 +10,7 @@ use yii\widgets\Breadcrumbs;
 use frontend\assets\AppAsset;
 use common\widgets\Alert;
 use common\models\VidRegion;
+use yii\web\View;
 
 AppAsset::register($this);
 ?>
@@ -24,7 +25,21 @@ AppAsset::register($this);
     <!--link rel="icon" href="/favicon.ico" type="image/x-icon"-->
     <?= Html::csrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?></title>
-    <?php $this->head() ?>
+    <?php 
+        $this->head();
+        
+       /* $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
+        $this->registerCssFile('https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css', 
+                    ['dependst' => 'yii\bootstrap\BootstrapAsset',  'position' => View::POS_BEGIN]); 
+        $this->registerJsFile('https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js', 
+                ['dependst' => 'yii\web\YiiAsset', 'position' => View::POS_BEGIN]);
+        */
+        $user = \common\models\User::find()->select(['id', 'username'])->where(['id' => Yii::$app->user->getId()])->one();
+        if ($user != null) {
+            $this->registerJs('let userName = "'. $user->username . '"; var idUser =' 
+                    . $user->id .';', \yii\web\View::POS_HEAD);
+        }
+        ?>
 </head>
 <body>
 <?php $this->beginBody() ?>
@@ -35,7 +50,7 @@ AppAsset::register($this);
         if ($role == 'manager' || $role == 'head_manager') {    
             Yii::$app->homeUrl = '/manager/index';
             $menuItems = [   
-                ['label' => 'Чат', 'url' => ['/chat/index']],   
+            //    ['label' => 'Чат', 'url' => ['/chat/index']],   
                 [
                     'label' => 'История',
                   //  ['label' => 'История', 'url' => []], 
@@ -48,24 +63,26 @@ AppAsset::register($this);
                     ],
                 ],
                 ['label' => 'Пользователи', 'url' => ['/site/user']],                 
-                ['label' => 'Менеджеры', 'url' => ['/manager/index']],                    
+                ['label' => 'Менеджеры', 'url' => ['/manager/index']],   
+                ['label' => 'Клиент-заявка-мастер', 'url' => ['/client-order-master/index']], 
                 ['label' => 'Заявки', 'url' => ['/zakaz/index']], 
                 [
                     'label' => 'Клиенты',
-                    'items' => [
-                        ['label' => 'Клиенты', 'url' => ['/klient/index']],                 
-                        '<li class="divider"></li>',                         
-                        ['label' => 'Клиенты и заявки', 'url' => ['/klient-vs-zakaz/index']],
+                 //   'items' => 
+                    'url' => ['/klient/index'],
+            //        [['label' => 'Клиенты', 'url' => ['/klient/index']],                 
+           //             '<li class="divider"></li>',                         
+            //            ['label' => 'Клиенты и заявки', 'url' => ['/klient-vs-zakaz/index']],
                 
-                    ],
+            //        ],
                 ],
                 [
                     'label' => 'Мастера',
                     'items' => [
                         ['label' => 'Мастера', 'url' => ['/master/index']],                   
                         '<li class="divider"></li>',                         
-                        ['label' => 'Мастера и заявки', 'url' => ['/master-vs-zakaz/index']], 
-                        '<li class="divider"></li>',                         
+                      //  ['label' => 'Мастера и заявки', 'url' => ['/master-vs-zakaz/index']], 
+                    //    '<li class="divider"></li>',                         
                         ['label' => 'Навыки мастеров', 'url' => ['/navik/index']],     
                     ],
                 ],      
@@ -74,7 +91,7 @@ AppAsset::register($this);
         if ($role == 'master') {
             Yii::$app->homeUrl = '/master/kabinet';
             $menuItems = [          
-                ['label' => 'Чат', 'url' => ['/chat/index']],   
+             //   ['label' => 'Чат', 'url' => ['/chat/index']],   
                 ['label' => 'Кабинет', 'url' => ['/master/kabinet']],
                 ['label' => 'Ваши навыки', 'url' => ['/navik/index']],
                 ['label' => 'Заявки', 'url' => ['/zakaz/vid']],  
@@ -112,20 +129,19 @@ AppAsset::register($this);
             'homeLink' => ($role == 'manager' || $role == 'head_manager') ?
             ['label' => 'Главная', 'url' => '/zakaz/index'] :
             ['label' => 'Главная', 'url' => '/master/kabinet'],
-            'links' => isset($this->params['breadcrumbs'])
-                ? $this->params['breadcrumbs'] : [],
+            'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
             
             ]) ?>
-        <?php // Alert::widget() ?>
-        <?php  //Yii::$app->session->getFlash('message') ?>
+        <?php //  Alert::widget() ?>
+        <?php // Yii::$app->session->getFlash('message') ?>
         
         <?php 
-            if (Yii::$app->session->getFlash('message')) { 
+            if ($msg = Yii::$app->session->getFlash('message')) { 
                 echo yii\bootstrap\Alert::widget([
                 'options' => [
                     'class' => 'alert-info',
                 ],
-                'body' => Yii::$app->session->getFlash('message'),
+                'body' => $msg,
                 ]);                
             }
         ?>
@@ -137,30 +153,60 @@ AppAsset::register($this);
 <footer class="footer">
     <div class="container">
         <p class="pull-left">&copy; <?= Html::encode(Yii::$app->name) ?> <?= date('Y') ?></p>
-        <div class="pull-right">
-            <?php 
-                if ($role == 'manager' && $this->title != 'Чат') {    
-                    echo '<div id="sp1" class="sp1">
-                        <div class="sp1-head"><button id="openChat" class="btn btn-primary btn-block">Сообщения о заявках</button></div>
-                        <div class="sp1-content" id="sp1-content"></div>
-                    </div>';             
-                }  
-            ?>         
-        </div>
+        <?php
+        if (!Yii::$app->user->isGuest) echo 
+        '<div class="messenger" id="messenger">            
+            <div class="collapse" id="messengerBody" style="width: 650px; padding: 5px; background-color: #eae7e7; border: solid 3px #993300; border-radius: 5px;">
+                <div class="left-panel" id="left-panel">   
+                    <div class="control-panel" id="control_panel">
+                        <div id="new_chat" class="control-panel-button" onclick="createFindUserDialog()" title="Новый чат"><img src="/images/new32.png"></div>
+                        <div id="leave_chat" class="control-panel-button" onclick="createExitChatDialog()" title="Покинуть чат"><img src="/images/leave32.png"></div>
+                        <div id="delete_chat" class="control-panel-button" onclick="createDeleteChatDialog()" title="Удалить чат"><img src="/images/delete32.png"></div>
+                        <div id="show_users" class="control-panel-button" onclick="createUsersOfChatDialog()" title="Список участников чата">
+                            <img src="/images/list_users32.png">
+                        </div>
+                        <div id="black_list" class="control-panel-button" onclick="createBlackListDialog()" title="Черный список"><img src="/images/blackList32.png"></div>
+                        <div id="update_chats" class="control-panel-button" onclick="updateChats()" title="Обновить список чатов"><img src="/images/update32.png"></div>
+                    </div>
+                    <div class="chats" id="chats"></div>                                                                                           
+                </div>
+                <div class="right-panel" id="right-panel">
+                    <button id="showLeftPanel" onclick="showLeftPanel()" style="margin: 3px; border: none; background-color: #eae7e7;"><img src="/images/visible16.png"></img></button>
+                    <div class="message-container"></div> 
+                </div>
+                <div class="bottom-panel" id="bottom-panel">
+                    <div style="width: 100%; background-color: grey; visibility: hidden; margin-bottom: 4px;" id="progressDiv">
+                        <div id="progress_line" style="height: 5px; background-color: green; width: 0px;"></div>                            
+                    </div>
+                    <div id="editorContainer" style="vertical-align: top; display: inline-block; width: 80%;">
+                        <input class="form-control" type="text" id="editor" style="width: 100%;">
+                    </div>
+                    <div id="editorButtonsContainer" style="display: inline-block; vertical-align: top; width: 17%">
+                        <button onclick="document.querySelector(\'#inputFile\').click();" class="btn btn-warning btn-sm" title="Прикрепить изображение"><img src="/images/attach_24.png"></img></button>
+                        <button id="send" onclick="sendMessage()" class="btn btn-warning btn-sm" title="Отправить"><img src="/images/send_24.png"></img></button>
+                        <input id="inputFile" type="file" style="display: none;">
+                    </div>        
+                </div>       
+            </div>
+            <button id="openChat" class="btn btn-primary" style="float: right; border-radius: 50px; padding: 20px; 
+                    transition: padding 0.2s; background-color: #993300;" data-toggle="collapse" data-target="#messengerBody">Чат        
+                <div id="head_alarm" class="alarm" style="visibility: visible; display: none;"></div>
+            </button>
+        </div>';  
+        ?>            
     </div>
 </footer>
-<?php 
-    $this->registerJsFile('@web/js/messenger.js', ['depends' => 'yii\web\YiiAsset', 'position' => \yii\web\View::POS_END]);
-    $this->registerJs('let userName = "'. \common\models\User::find()->select(['username'])->where(['id' => Yii::$app->user->getId()])->scalar() 
-        . '"; ', \yii\web\View::POS_HEAD);
-    $this->registerJs(' securityWebSocket();', \yii\web\View::POS_LOAD);
+<?php    
+
+    if (!Yii::$app->user->isGuest)
+            $this->registerJsFile('@web/js/messenger.js', ['depends' => 'yii\web\YiiAsset', 'position' => \yii\web\View::POS_END]);
     
-    if ($role == 'manager' && $this->title != 'Чат') {    
-        $this->registerJs(' $("#openChat").bind("click", function(){'
-        . ' if ($("#sp1")[0].style.height == "40px") { $("#sp1")[0].style.height = "300px"; }'
-        . ' else { $("#sp1")[0].style.height = "40px"; }});',
+  //  $this->registerJs(' securityWebSocket();', \yii\web\View::POS_LOAD);
+    
+   // if ($role == 'manager' && $this->title != 'Чат') {    
+    /*    $this->registerJs(' ',
          \yii\web\View::POS_END);         
-    }
+  //  }*/
 ?>
 <?php $this->endBody() ?>
 </body>

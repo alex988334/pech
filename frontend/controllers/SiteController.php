@@ -3,6 +3,7 @@ namespace frontend\controllers;
 
 use Yii;
 use yii\base\InvalidParamException;
+use Symfony\Component\Routing\Exception\InvalidParameterException;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
@@ -20,6 +21,7 @@ use common\models\Session;
 use common\models\AuthItem;
 use frontend\models\UpdateForm;
 use common\models\UserSearch;
+use common\models\ManagerTableGrant;
 
 
 
@@ -57,7 +59,7 @@ class SiteController extends Controller
                         'roles' => ['master', 'klient', 'head_manager'], 
                     ],
                     [
-                        'actions' => ['user', 'reset'],
+                        'actions' => ['user', 'reset', 'block-user'],
                         'allow' => true, 
                         'roles' => ['manager', 'head_manager'], 
                     ],
@@ -100,17 +102,32 @@ class SiteController extends Controller
         }
         
         $searchModel = new UserSearch();
+        Yii::debug(['params' => Yii::$app->request->queryParams]);
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
+        $fields = ManagerTableGrant::findBySql('SELECT t.name, t.alias, `id_table_field`, '
+                . '`field_width`, `visibility_field` FROM `manager_table_grant` tg, '
+                . ' manager_table t WHERE tg.id_table_field=t.id AND t.parent IN '
+                . ' (SELECT id FROM manager_table WHERE name IN ("user"))'
+                . ' AND id_manager=' . Yii::$app->user->getId())->asArray()->all();         
+        
+        $massFilters = User::getRelationTablesArray();
+        $massFilters['vidStatus'] = [ User::STATUS_ACTIVE => 'Активен', 
+                User::STATUS_BLOCKED => 'Заблокирован', User::STATUS_DELETED => 'Удален' ];
+        
         return $this->render('index', [                
             'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,         
+            'dataProvider' => $dataProvider,   
+            'fields' => $fields,
+            'massFilters' => $massFilters,
         ]);
     }
     
     public function actionReset()
     {
         $region = Yii::$app->session->get('id_region'); 
+        
+       // if ($id == '0') return $this->redirect(['/site/user', 'page' => Yii::$app->session->get('page') ?? 1]);
         
         if (($id = Yii::$app->request->post('id')) && (((string)((int)$id))) == $id) { 
             
@@ -124,9 +141,10 @@ class SiteController extends Controller
             } elseif ($master == $region || $manager == $region || $klient == $region) {
                 $flag = true;
             } else {
+                $flag = false;
                 Yii::$app->session->setFlash('message', 'Этот пользователь не из вашего региона');
             }          
-        }       
+        } else { $flag = false;}     
         
         if ($flag && $type = Yii::$app->request->post('type')) {
             switch ($type) {
@@ -143,6 +161,40 @@ class SiteController extends Controller
         return $this->redirect(['/site/user', 'page' => Yii::$app->session->get('page') ?? 1]);
     }
 
+    
+    public function actionBlockUser()
+    {
+        if (($id = Yii::$app->request->post('id')) === NULL) {
+            return $this->redirect('user');
+     //       throw new InvalidParameterException('Params error');
+        }
+        
+        $user = User::find()->where(['id' => $id])->with('role')->one();
+        $role = current(Yii::$app->authManager->getRolesByUser(Yii::$app->user->getId()));
+        
+        $flag = false;
+        if ($role->name == AuthItem::HEAD_MANAGER 
+                && ($user->role->item_name == User::KLIENT || $user->role->item_name == User::MASTER 
+                || $user->role->item_name == User::MANAGER)) $flag = true;
+        if ($role->name == AuthItem::MANAGER 
+                && ($user->role->item_name == User::KLIENT || $user->role->item_name == User::MASTER)) 
+                $flag = true;
+                
+        if ($flag || $user->username != 'system') {
+            if ($user->status == User::STATUS_ACTIVE) {
+                $user->status = User::STATUS_BLOCKED;
+            } elseif ($user->status == User::STATUS_BLOCKED) {
+                $user->status = User::STATUS_ACTIVE;
+            }
+            if ($user->save()) {
+                Yii::$app->session->setFlash('message', 'Успех операции');
+            }
+        }
+        
+        return $this->redirect('user');
+    }
+    
+    
     public function actionIndex(){ 
         
     }
@@ -170,7 +222,7 @@ class SiteController extends Controller
                     $flag = false;  
                     $session->setFlash('message', 'Вы уже зашли! Старое время: ' . $user['last_time'] . ' Новое время: ' . time());
                 } else {
-                    Yii::$app->session->setFlash('message', 'Старое время: ' . $user['last_time'] . ' Новое время: ' . time());
+              //      Yii::$app->session->setFlash('message', 'Старое время: ' . $user['last_time'] . ' Новое время: ' . time());
                     Yii::$app->db->createCommand('DELETE FROM session WHERE user_id=' . $user['user_id'])->execute();                    
                 }  
             }     
@@ -208,6 +260,7 @@ class SiteController extends Controller
         ]);
 
     }
+    
     
     public function actionLogout()
     {

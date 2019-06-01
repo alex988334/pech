@@ -179,4 +179,16 @@ class HistoryMaster extends \yii\db\ActiveRecord
         
         return $model;
     }
+    
+    public static function getRelationTablesArray()
+    {
+        $vid = [];
+        $vid['vidStatusHistory'] = VidStatusHistory::find()->asArray()->all();
+        $vid['vidStatusOnOff'] = VidDefault::find()->asArray()->all();
+        $vid['vidStatusWork'] = VidStatusWork::find()->asArray()->all();
+        $vid['vidRegion'] = VidRegion::find()->select(['id', 'name'])
+                ->where('parent_id <> 0')->asArray()->all();
+        
+        return $vid;
+    }
 }

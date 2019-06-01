@@ -25,6 +25,7 @@ class Klient extends \yii\db\ActiveRecord
     const SCENARIO_UPDATE_MANAGER = 'update_manager';
     const SCENARIO_UPDATE_HEAD_MANAGER = 'update_head_manager';
     const SCENARIO_CREATE = 'create';
+    const SCENARIO_RECOVERY = 'recovery';
     
     /**
      * {@inheritdoc}
@@ -68,6 +69,10 @@ class Klient extends \yii\db\ActiveRecord
             ],  
             self::SCENARIO_CREATE => [
                 'id_klient', 'imya', 'familiya', 'otchestvo', 'vozrast', 'phone'
+            ],
+            self::SCENARIO_RECOVERY => [
+                'id', 'id_klient', 'imya', 'familiya', 'otchestvo', 'vozrast', 'phone',
+                'id_status_on_off', 'reyting', 'balans', 'id_region', 'old_id',
             ],
         ];
     }
@@ -123,6 +128,17 @@ class Klient extends \yii\db\ActiveRecord
     public function getStatusOnOff()
     {
         return $this->hasOne(VidDefault::className(), ['id' => 'id_status_on_off']);
+    }
+    
+    
+    public static function getRelationTablesArray()
+    {
+        $vid = [];        
+        $vid['vidStatusOnOff'] = VidDefault::find()->select(['id', 'name'])->asArray()->all();        
+        $vid['vidRegion'] = VidRegion::find()->select(['id', 'name'])
+                ->where('parent_id <> 0')->indexBy('id')->asArray()->all();
+        
+        return $vid;
     }
     
 }

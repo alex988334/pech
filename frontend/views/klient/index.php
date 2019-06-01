@@ -37,6 +37,20 @@ $this->params['breadcrumbs'][] = $this->title;
             ];
             $last = count($massColums) - 1;
             switch ($one['name']){ 
+                case 'id_klient':
+                    $massColums[$last]['format'] = 'raw';
+                    $massColums[$last]['value'] = function ($data){
+                        return Html::a($data['id_klient'], ['/site/user'], [
+                            'title' => 'Пользователи',
+                            'data' => [
+                                'method' => 'get',
+                                'params' => [
+                                    'id' => $data['id_klient']
+                                ]
+                            ]
+                        ]) ?? '';
+                    };
+                    break;
                 case 'id_status_on_off': 
                     $massColums[$last]['attribute'] = 'status_on_off_name';                   
                     $massColums[$last]['label'] = 'Статус подключения';
@@ -49,7 +63,19 @@ $this->params['breadcrumbs'][] = $this->title;
                     break;                                                      
             }
         } 
-        $massColums[] = ['class' => 'yii\grid\ActionColumn'];        
+        $massColums[] = [
+                        'class' => 'yii\grid\ActionColumn',
+                        'buttons' => [                            
+                            'client-order-master' => function ($url, $model) {  
+                                return Html::a('<span class="glyphicon glyphicon-share-alt"></span>', 
+                                    ['/client-order-master/index'], 
+                                    [ 'title' => 'Клиент-заявка-мастер',
+                                        'data' => ['method' => 'post', 'params' => ['id_client' => $model['id_klient']]]
+                                    ]);                        
+                            },
+                        ],
+                        'template' => '{client-order-master} {view} {update} {delete}',
+                    ];     
         $gridView['filterModel'] = $searchModel;  
         $gridView['columns'] = $massColums;
         
@@ -64,15 +90,7 @@ $this->params['breadcrumbs'][] = $this->title;
             echo ShowFields::widget (['fields' => $fields]); 
             $this->registerJsFile('@web/js/select_fields.js', [
                 'dependst' => 'yii\web\YiiAsset',
-                'position' => View::POS_END]);                
-            $this->registerJs(
-                'massChange = []; $("#selectedFields").children("input").each(function (index, value){
-                this.onclick = function(elem) { 
-                var one = $(massChange).filter(function (i, k){ return k[0] == elem.target.id; });
-                if (one.length != 0) { if (elem.target.checked) one[0].visible = 1; else one[0].visible = 0; 
-                } else massChange.push({id: elem.target.id, visible: elem.target.checked});};});',
-                View::POS_READY
-            );
+                'position' => View::POS_END]);  
         }
     ?>
 </div>

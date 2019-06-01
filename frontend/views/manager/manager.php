@@ -1,3 +1,0 @@
-<?php
-
-debugArray($model);

@@ -94,15 +94,13 @@ debugArray(Yii::$app->session->get('role'));*/
 ?>
 <?php  
     if (count($model['masterVsZakaz']) > 0){
-            $hrefName = 'Перейти к вашим заявкам: ';
-            foreach ($model['masterVsZakaz'] as $id){
-                $hrefName .= $id['id_zakaz'] . ', ';
-            }
-          //  Yii::$app->session->set('zakazi', $massId);
-        echo '<div style="width : 300px; padding : 10px; margin-left : auto; '
-            . 'margin-right : auto">' . Html::a($hrefName, 
+        $hrefName = 'Перейти к вашим заявкам: ';
+        foreach ($model['masterVsZakaz'] as $one){
+            $hrefName .= $one['id_zakaz'] . ', ';
+        }         
+        echo Html::a($hrefName, 
                 Yii::$app->urlManager->createUrl(['/master/vashi-zakazi']), 
-                ['class' => 'btn btn-warning btn-block']) . '</div>';
+                ['class' => 'btn btn-warning btn-block']);
     }
 
   /* if (Yii::$app->session->get('zakazi')){

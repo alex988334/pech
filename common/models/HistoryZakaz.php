@@ -215,4 +215,20 @@ class HistoryZakaz extends \yii\db\ActiveRecord
         
         return $model;
     }
+    
+    public static function getRelationTablesArray()
+    {
+        $vid = [];
+        $vid['vidStatusHistory'] = VidStatusHistory::find()->asArray()->all();   
+        $vid['vidNavik'] = VidNavik::find()->asArray()->all();        
+        $vid['vidStatusZakaz'] = VidStatusZakaz::find()->select(['id', 'name'])->asArray()->all();        
+        $vid['vidShag'] = VidShag::find()->asArray()->all();
+        $vid['vidRegion'] = VidRegion::find()->select(['id', 'name'])
+                ->where('parent_id <> 0')->asArray()->all();
+        
+        $vid['vidWork'] = VidWork::find()->asArray()->all();        
+        $vid['vidOcenka'] = VidOcenka::find()->asArray()->all();
+        
+        return $vid;
+    }
 }

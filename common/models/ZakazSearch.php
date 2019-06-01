@@ -75,8 +75,17 @@ class ZakazSearch extends Zakaz
                     ])                    
                     ->joinWith('vidWork')->joinWith('navik')->joinWith('shag')
                     ->joinWith('region')->joinWith('statusZakaz')->joinWith('ocenka')
-                    ->where(['id_region' => $session->get('id_region')])
-                    ->asArray();
+                    ->where(['id_region' => $session->get('id_region')]);
+            
+            if (Yii::$app->session->get('invisibleExecutedOrders') == FALSE) {
+                $query->andWhere(['<>', 'id_status_zakaz', VidStatusZakaz::ORDER_EXECUTED]);
+                $query->andWhere(['<>', 'id_status_zakaz', VidStatusZakaz::ORDER_CANCELLED]);
+            } 
+            if (Yii::$app->session->get('invisibleBlockedOrders') == FALSE) {
+                $query->andWhere(['<>', 'id_status_zakaz', VidStatusZakaz::ORDER_UNAVAILABLE]);            
+            } 
+            
+            $query->asArray();
             
         } elseif($role == 'master') {   
             
@@ -130,6 +139,16 @@ class ZakazSearch extends Zakaz
 
         $this->load($params);
 
+        if (isset($this->data_registry) && (!empty($this->data_registry))) {
+            $this->data_registry = date('Y-m-d', strtotime($this->data_registry));
+        }
+        if (isset($this->data_start) && (!empty($this->data_start))) {
+            $this->data_start = date('Y-m-d', strtotime($this->data_start));
+        }
+        if (isset($this->data_end) && (!empty($this->data_end))) {
+            $this->data_end = date('Y-m-d', strtotime($this->data_end));
+        }
+        
         if (!$this->validate()) {
             // uncomment the following line if you do not want to return any records when validation fails
             // $query->where('0=1');

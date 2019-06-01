@@ -12,6 +12,7 @@ use common\models\Master;
  */
 class MasterSearch extends Master
 {
+    const ONE_DAY = 86400;
     public $status_on_off_name;    
     public $region_name;
     public $status_work_name;
@@ -66,8 +67,6 @@ class MasterSearch extends Master
             ->where(['id_region' => $session->get('id_region')])
             ->asArray();            
         
-        
-// 'izdelie_navik_name', 
         // add conditions that should always apply here
 
         $dataProvider = new ActiveDataProvider([
@@ -86,6 +85,13 @@ class MasterSearch extends Master
 
         $this->load($params);
 
+        if (isset($this->data_registry) && (!empty($this->data_registry))) {
+            $this->data_registry = date('Y-m-d', strtotime($this->data_registry));
+        }
+        if (isset($this->data_unregistry) && (!empty($this->data_unregistry))) {
+            $this->data_unregistry = date('Y-m-d', strtotime($this->data_unregistry));
+        }
+        
         if (!$this->validate()) {
             // uncomment the following line if you do not want to return any records when validation fails
             // $query->where('0=1');
@@ -113,7 +119,7 @@ class MasterSearch extends Master
             ->andFilterWhere(['like', 'otchestvo', $this->otchestvo])
             ->andFilterWhere(['like', 'phone', $this->phone])
             ->andFilterWhere(['like', 'mesto_jitelstva', $this->mesto_jitelstva])
-            ->andFilterWhere(['like', 'mesto_raboti', $this->mesto_raboti])
+            ->andFilterWhere(['like', 'mesto_raboti', $this->mesto_raboti])                
                 ->andFilterWhere(['like', 'vid_default.name', $this->status_on_off_name])
                 ->andFilterWhere(['like', 'vid_status_work.name', $this->status_work_name])
                 ->andFilterWhere(['like', 'vid_region.name', $this->region_name]);

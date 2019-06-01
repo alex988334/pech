@@ -31,6 +31,7 @@ class VidChangeParametr extends \yii\db\ActiveRecord
         return [
             [['reyting_add', 'reyting_delete', 'balans_add', 'balans_delete'], 'required'],
             [['reyting_add', 'reyting_delete', 'balans_add', 'balans_delete'], 'integer'],
+            [['name'], 'string'],
         ];
     }
 
@@ -41,6 +42,7 @@ class VidChangeParametr extends \yii\db\ActiveRecord
     {
         return [
             'id' => '№',
+            'name' => 'Название',
             'reyting_add' => 'Добавляемый рейтинг за заявку',
             'reyting_delete' => 'Снимаемый рейтинг за отказ от заявки',
             'balans_add' => 'Процент баланса возвращаемый после отказа от заявки',

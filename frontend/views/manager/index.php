@@ -9,8 +9,8 @@ use yii\widgets\Pjax;
 
 $this->title = 'Менеджеры';
 $this->params['breadcrumbs'][] = $this->title;
-
-//debugArray()
+//debugArray([date('d-m-Y', 1540361486)]);
+//debugArray($massErrorsDB);
 ?>
 <div class="manager-index">
    
@@ -51,31 +51,51 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
     ]); ?>
     <?php Pjax::end();  ?>
+    
     <?php 
-        if (count($mass) > 0) {
-            foreach ($mass as $key => $one) {
-                echo '<br><a href="#'. $key .'" data-toggle="collapse" class="btn btn-danger" style="margin: 3px; max-width: 500px;">НАРУШЕНИЕ ЦЕЛОСТНОСТИ БАЗЫ ДАННЫХ!!!</a>';
+        if (count($massErrorsDB) > 0) {
+            foreach ($massErrorsDB as $key => $one) {
+                if (key_exists('created_at', $one['values'][0])) {
+                    for ($i=0; $i<count($one['values']); $i++) {
+                        $massErrorsDB[$key]['values'][$i]['created_at'] = date('d-m-Y', $massErrorsDB[$key]['values'][$i]['created_at']);
+                    }                    
+                } 
+                if (key_exists('updated_at', $one['values'][0])) {
+                    for ($i=0; $i<count($one['values']); $i++) {
+                        $massErrorsDB[$key]['values'][$i]['updated_at'] = date('d-m-Y', $massErrorsDB[$key]['values'][$i]['updated_at']);
+                    }
+                } 
+            }
+            echo '<br>';
+            foreach ($massErrorsDB as $key => $one) {
+                echo '<div class="container-error">';
+                echo '<a href="#'. $key .'" data-toggle="collapse" class="btn btn-danger" style="margin: 3px; max-width: 500px;">НАРУШЕНИЕ ЦЕЛОСТНОСТИ БАЗЫ ДАННЫХ!!!</a>';
                 
-                echo '<div class="collapse" id="'. $key .'" style="border-radius: 4px; width: 1100px; background-color: #f6c4c4;">';
+                echo '<div class="collapse" id="'. $key .'" style="border-radius: 4px; width: 1100px;">';
                 
-                echo '<div style="border-radius: 4px; width: 1100px; padding: 5px; background-color: #d43f3a; color: white;"><b>'. $one['error'] .'</b></div>';
+                echo '<div class="table-error_head"><b>'. $one['error'] .'</b></div>';
                 
-                echo '<table border="2" style="table-layout: fixed; margin-top:10px; margin-bottom: 10px; margin-left:auto; margin-right: auto; width: 1000px; border-radius: 4px; border: solid grey 2px; ">';
+                echo '<table border="2" class="table-error">';
                 
                 echo '<tr>';
                 foreach ($one['lables'] as $label) {                    
-                    echo '<td style="text-align: center; padding: 4px;">' .  $label . '</td>';                    
+                    echo '<td class="table-error_td"><b>' .  $label . '</b></td>';                    
                 }
                 echo '</tr>';
                 
                 foreach ($one['values'] as $row){
                     echo '<tr>';
-                    foreach ($row as $value) {
-                        echo '<td style="text-align: center; padding: 4px;">' .  $value . '</td>';      
+                    foreach ($row as $k => $value) {  
+                        if (count($one['url']) && key_exists($k, $one['url'])) {
+                            $v = Html::a($value, $one['url'][$k], ['data' => ['method' => 'post', 'params' => [$k => $value]]]);
+                        } else {
+                            $v = $value;
+                        }
+                        echo '<td class="table-error_td">' . $v . '</td>';                       
                     }
                     echo '</tr>';
                 }                
-                echo '</table></div>';
+                echo '</table></div></div>';
             }
             
             /*GridView::widget([

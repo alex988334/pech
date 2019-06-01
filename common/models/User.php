@@ -28,6 +28,7 @@ use common\models\Session;
 class User extends ActiveRecord implements IdentityInterface
 {
     const STATUS_DELETED = 0;
+    const STATUS_BLOCKED = 1;
     const STATUS_ACTIVE = 10;
     
     const MANAGER = 'manager';
@@ -35,9 +36,7 @@ class User extends ActiveRecord implements IdentityInterface
     const MASTER = 'master';
     const KLIENT = 'klient';
 
-
-
-        /**
+    /**
      * {@inheritdoc}
      */
     public static function tableName()
@@ -61,13 +60,14 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules()
     {
         return [            
-            [['updated_at'], 'integer'],
-            [['username'], 'unique'],
-            [['username'], 'string', 'max' => 50],
+            [['updated_at', 'created_at'], 'integer'],
+            [['id', 'username'], 'unique'],
+            [['username', 'email'], 'string', 'max' => 50],
             [['password_hash'], 'string', 'max' => 255],
+            [['imei'], 'string', 'max' => 15],            
             
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
-            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED]],
+            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_DELETED, self::STATUS_BLOCKED]],
         ];
     }
     
@@ -80,7 +80,11 @@ class User extends ActiveRecord implements IdentityInterface
             'id' => '№ Пользователя',
             'username' => 'Имя пользователя (логин)',
             'password_hash' => 'Пароль',
-            'imei' => 'IMEI (код мобильного приложения)',            
+            'email' => 'Электронная почта',
+            'imei' => 'IMEI (код мобильного приложения)',     
+            'status' => 'Статус',
+            'created_at' => 'Дата создания',
+            'updated_at' => 'Дата обновления',
         ];
     }
 
@@ -214,5 +218,21 @@ class User extends ActiveRecord implements IdentityInterface
     {
         $this->password_reset_token = null;
     }   
+    
+    
+    public function getRole()
+    {
+        return $this->hasOne(AuthAssignment::className(), ['user_id' => 'id']);
+    }
+    
+    
+    public static function getRelationTablesArray()
+    {
+        $vid = [];        
+        $vid['vidRole'] = AuthItem::find()->select(['name', 'description'])
+                ->indexBy('name')->asArray()->all(); 
+        
+        return $vid;
+    }
     
 }

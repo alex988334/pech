@@ -63,81 +63,169 @@ class ManagerController extends Controller
         if (Yii::$app->session->get('role') == User::HEAD_MANAGER) { 
             $region = '';             
         } else {
-            $region = 'AND id_region=' . Yii::$app->session->get('id_region');
+            $region = 'id_region=' . Yii::$app->session->get('id_region');
         }        
         
-        $massZakaz = Yii::$app->db->createCommand('SELECT z.id, w.name AS work_name, z.`name`, r.name AS region_name '
-                . ' FROM (SELECT z.id FROM zakaz z LEFT JOIN klient_vs_zakaz kz ON z.id=kz.id_zakaz '
-                . ' WHERE kz.id_zakaz IS NULL ' . $region . ') zak, zakaz z, vid_work w, vid_region r '
-                . ' WHERE z.id_vid_work=w.id AND z.id=zak.id AND z.id_region=r.id ORDER BY `z`.`id` ASC')
-                ->queryAll();
+        $clOrdMastOrder = Yii::$app->db->createCommand(
+                'SELECT 
+                    com.id, com.id_order 
+                FROM 
+                    client_order_master com
+                LEFT JOIN 
+                    zakaz z ON com.id_order=z.id 
+                WHERE 
+                    z.id IS null ' . (($region != '') ? (' AND com.' . $region) : '')
+            )->queryAll();
+        $clOrdMastClient = Yii::$app->db->createCommand(
+                'SELECT 
+                    com.id, com.id_client
+                FROM 
+                    client_order_master com 
+                LEFT JOIN 
+                    klient k ON com.id_client=k.id_klient 
+                WHERE 
+                    k.id_klient IS NULL ' . (($region != '') ? (' AND com.' . $region) : '')
+            )->queryAll();
+        $clOrdMastMaster = Yii::$app->db->createCommand(
+                'SELECT 
+                    com.id, com.id_master 
+                FROM 
+                    client_order_master com 
+                LEFT JOIN 
+                    `master` m ON com.id_master=m.id_master 
+                WHERE 
+                    m.id_master IS NULL AND com.id_master IS NOT NULL ' . (($region != '') ? (' AND com.' . $region) : '')
+            )->queryAll();
         
-        $massKlientZakaz = Yii::$app->db->createCommand('SELECT * FROM (SELECT kz.id as zakaz FROM klient_vs_zakaz kz '
-                . ' LEFT JOIN zakaz z ON kz.id_zakaz=z.id WHERE z.id IS null) as zakaz UNION (SELECT kz.id as klient'
-                . ' FROM klient_vs_zakaz kz LEFT JOIN klient k ON kz.id_klient=k.id_klient WHERE k.id_klient IS null)')
-                ->queryAll();
+        $orderClient = Yii::$app->db->createCommand(
+                'SELECT 
+                    z.id, w.name AS work_name, z.name, cena, r.name AS region_name  
+                FROM 
+                    (
+                        SELECT 
+                            z.id 
+                        FROM 
+                            zakaz z 
+                        LEFT JOIN 
+                            client_order_master com ON z.id=com.id_order 
+                        WHERE 
+                            com.id_order IS NULL ' . (($region != '') ? ('AND com.' . $region) : '') 
+                    .') zak, zakaz z, vid_work w, vid_region r 
+                WHERE
+                    z.id_vid_work=w.id AND z.id=zak.id AND z.id_region=r.id 
+                ORDER BY 
+                    z.id ASC'
+            )->queryAll();    
         
-        $massKlient = Yii::$app->db->createCommand('SELECT k.id_klient, imya, familiya, otchestvo, r.name AS region_name'
-                . ' FROM (SELECT k.id_klient FROM klient k LEFT JOIN klient_vs_zakaz kz ON k.id_klient=kz.id_klient '
-                . ' WHERE kz.id_klient IS NULL ' . $region . ') kl, klient k, vid_region r '
-                . ' WHERE k.id_klient=kl.id_klient AND k.id_region=r.id ORDER BY k.id_klient ASC')
-                ->queryAll();
+        $clientOrder = Yii::$app->db->createCommand(
+                'SELECT 
+                    k.id_klient, imya, familiya, otchestvo, r.name AS region_name
+                FROM 
+                    (
+                        SELECT 
+                            k.id_klient 
+                        FROM 
+                            klient k 
+                        LEFT JOIN 
+                            client_order_master com ON k.id_klient=com.id_client  
+                        WHERE 
+                            com.id_client IS NULL ' . (($region != '') ? (' AND com.' . $region) : '') 
+                    .') kl, klient k, vid_region r  
+                WHERE 
+                    k.id_klient=kl.id_klient AND k.id_region=r.id 
+                ORDER BY 
+                    k.id_klient ASC'
+            )->queryAll();
         
-        $massZakazMaster = Yii::$app->db->createCommand('SELECT * FROM (SELECT mz.id AS zakaz FROM master_vs_zakaz mz '
-                . 'LEFT JOIN zakaz z ON mz.id_zakaz=z.id WHERE z.id IS null) as zakaz UNION '
-                . '(SELECT mz.id AS master FROM master_vs_zakaz mz LEFT JOIN master m ON mz.id_master=m.id_master '
-                . 'WHERE m.id_master IS null)')
-                ->queryAll();
+        $usersClientMasterManager = Yii::$app->db->createCommand(
+                'SELECT 
+                    id, username, created_at, updated_at 
+                FROM 
+                    `user` 
+                WHERE 
+                    id IN 
+                        (
+                            SELECT 
+                                res.id 
+                            FROM 
+                                (
+                                    SELECT 
+                                        r.id, k.id_klient 
+                                    FROM 
+                                        (
+                                            SELECT 
+                                                u.`id`, m.id_master 
+                                            FROM 
+                                                `user` u 
+                                            LEFT JOIN 
+                                                `master` m ON u.id=m.id_master 
+                                            WHERE 
+                                                m.id_master IS NULL
+                                        ) r 
+                                    LEFT JOIN 
+                                        klient k ON r.id=k.id_klient 
+                                    WHERE 
+                                        k.id_klient IS NULL
+                                ) res 
+                            LEFT JOIN 
+                                manager m ON res.id=m.id_manager 
+                            WHERE 
+                                m.id_manager IS NULL
+                        ) AND username <> "system"'
+            )->queryAll();
         
-        $massStatusZakaz = Yii::$app->db->createCommand('SELECT z.id FROM zakaz z JOIN master_vs_zakaz mz '
-                . ' ON z.id=mz.id_zakaz WHERE (id_status_zakaz <> ' . VidStatusZakaz::ORDER_EXECUTES 
-                . ' OR id_status_zakaz <> '. VidStatusZakaz::ORDER_REQUEST_REJECTION .') ' . $region)
-                ->queryAll();
-        
-        $massUser = Yii::$app->db->createCommand('SELECT id, username FROM user WHERE id IN '
-                . ' (SELECT res.id FROM (SELECT r.id, k.id_klient FROM (SELECT u.`id`, m.id_master FROM `user` u '
-                . ' LEFT JOIN master m ON u.id=m.id_master WHERE m.id_master IS NULL) r LEFT JOIN klient k '
-                . ' ON r.id=k.id_klient WHERE k.id_klient IS NULL) res LEFT JOIN manager m ON res.id=m.id_manager '
-                . ' WHERE m.id_manager IS NULL)')
-                ->queryAll();
-        
-        $mass = [
-            [ 
-                'lables' => ['№ пользователя', 'Логин'],
-                'values' => $massUser,
-                'error' => 'Нарушена целостность базы данных!!! У следующих пользователей была прервана регистрация (не мастер, не клиент и не менеджер)',
-            ],
-            [ 
-                'lables' => ['№ заявки', 'Вид работ', 'Название', 'Регион'],
-                'values' => $massZakaz,
+        if (count($clOrdMastClient)) {
+            $massErrorsDB[] = [
+                'lables' => ['№', '№ клиента'],
+                'values' => $clOrdMastClient,  
+                'error' => 'Нарушена целостность базы данных!!! Следующие записи в таблице "Клиент-заявка-мастер" ссылаются '
+                            . 'на несуществующие записи в таблице "Клиенты".',
+                'url' => ['id' => '/client-order-master/index']
+            ];
+        }
+        if (count($clOrdMastOrder)) {
+            $massErrorsDB[] = [
+                'lables' => ['№', '№ заявки'],
+                'values' => $clOrdMastOrder,
+                'error' => 'Нарушена целостность базы данных!!! Следующие записи в таблице "Клиент-заявка-мастер" ссылаются '
+                            . 'на несуществующие записи в таблице "Клиенты".',
+                'url' => ['id' => '/client-order-master/index']
+            ];
+        }
+        if (count($clOrdMastMaster)) {
+            $massErrorsDB[] = [
+                'lables' => ['№', '№ мастера'],
+                'values' => $clOrdMastMaster, 
+                'error' => 'Нарушена целостность базы данных!!! Следующие записи в таблице "Клиент-заявка-мастер" ссылаются '
+                            . 'на несуществующие записи в таблице "Мастера".',
+                'url' => ['id' => '/client-order-master/index']
+            ];
+        }
+        if (count($orderClient)) {
+            $massErrorsDB[] = [ 
+                'lables' => ['№ заявки', 'Вид работ', 'Название', 'Цена', 'Регион'],
+                'values' => $orderClient,
                 'error' => 'Нарушена целостность базы данных!!! У следующих заявок отсутствует связь с клиентами',
-            ],
-            [
-                'lables' => ['№'],
-                'values' => $massKlientZakaz,
-                'error' => 'Нарушена целостность базы данных!!! Следующие записи в таблице "Клиенты и заявки" ссылаются '
-                            . 'на несуществующие записи в таблицах "Клиенты" или "Заявки". '
-                            . '(Это сообщение отображается у всех менеджеров во всех регионах)'
-            ],
-            [
-                'lables' => ['№'],
-                'values' => $massZakazMaster,
-                'error' => 'Нарушена целостность базы данных!!! Следующие записи в таблице "Мастера и заявки" ссылаются '
-                            . 'на несуществующие записи в таблицах "Мастера" или "Заявки" '
-                            . '(Это сообщение отображается у всех менеджеров во всех регионах)'
-            ],            
-            [
+                'url' => ['id' => '/zakaz/index']
+            ];
+        }
+        if (count($usersClientMasterManager)) {
+            $massErrorsDB[] = [ 
+                'lables' => ['№ пользователя', 'Логин', 'Создан', 'Изменен'],
+                'values' => $usersClientMasterManager,
+                'error' => 'Нарушена целостность базы данных!!! У следующих пользователей '
+                        . 'была прервана регистрация (не мастер, не клиент и не менеджер)',
+                'url' => ['id' => '/site/user']
+            ];
+        }
+        if (count($clientOrder)) {
+            $massErrorsDB[] = [
                 'lables' => ['№ клиента', 'Имя', 'Фамилия', 'Отчество', 'Регион'],
-                'values' => $massKlient,
-                'error' => 'Возможно нарушена целостность базы данных! У следующих клиентов нет заявок'
-            ],
-            [
-                'lables' => ['№ заявки'],
-                'values' => $massStatusZakaz,
-                'error' => 'Нарушение статусов прикрепленных к мастерам заявок!!! '
-                            . 'Статусы должны быть либо "выполняется", либо "запрос отказа"'
-            ],
-        ];
+                'values' => $clientOrder,
+                'error' => 'Возможно нарушена целостность базы данных! У следующих клиентов нет заявок',
+                'url' => ['id_klient' => '/klient/index']
+            ];
+        }
         
         $fields = ManagerTableGrant::findBySql('SELECT t.name, t.alias, `id_table_field`, '
                 . '`field_width`, `visibility_field` FROM `manager_table_grant` tg, '
@@ -149,7 +237,7 @@ class ManagerController extends Controller
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
             'fields' => $fields,
-            'mass' => $mass,            
+            'massErrorsDB' => $massErrorsDB,            
         ]);
     }
 
@@ -255,10 +343,12 @@ class ManagerController extends Controller
                 $query = 'UPDATE manager_table_grant SET visibility_field='
                         . $one['visible'] .' WHERE id_table_field='. $one['id'] 
                         .' AND id_manager='. $id_manager;
-                $request = Yii::$app->db->createCommand($query);
-                if (!$request->execute()) {
+                //$request = 
+                Yii::$app->db->createCommand($query)->execute();
+              
+                /*  if (!$request->execute()) {
                     return json_encode(['status' => 0, 'message' => 'Некоторые поля не удалось сохранить: ' . $query]);
-                }
+                }*/
             }
             return json_encode(['status' => 1, 'message' => 'Успех сохранения']);
         }
