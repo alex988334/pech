@@ -4,10 +4,8 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use yii\helpers\ArrayHelper;
 use yii\jui\DatePicker;
-use mirocow\yandexmaps\Map;
-use mirocow\yandexmaps\Canvas;
-
-
+use yii\web\View;
+use common\models\FileManager;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Zakazi */
@@ -19,6 +17,11 @@ $this->params['breadcrumbs'][] = ['label' => '№' . $model->id, 'url' => ['view
 $this->params['breadcrumbs'][] = 'Обновление';
 ?>
 
+<?php 
+    //  yandex maps API
+    $url = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=4ec92947-0754-4056-90f0-4c6568e0ade1';
+    $this->registerJsFile($url, ['position' => View::POS_HEAD]);
+?>
     
 <div class="zakazi-update">
 
@@ -78,51 +81,30 @@ $this->params['breadcrumbs'][] = 'Обновление';
         ],
     ]) ?>
 
-    <?php /* '<div><a href="#" class="spoiler-title">Карта</a>
-            <div id="map" class="spoiler-content">'?>
-    <?php    
-      /*  $map = new Map('yandex_map', [
-            'center' => [55.7372, 37.6066],
-            'zoom' => 10,
-            // Enable zoom with mouse scroll
-            'behaviors' => array('default', 'scrollZoom'),
-            'type' => "yandex#map",
-        ], 
-        [
-            // Permit zoom only fro 9 to 11
-            'minZoom' => 3,
-            'maxZoom' => 18,
-          /*  'controls' => [
-                // v 2.1
-           /*     'new ymaps.control.ZoomControl({options: {size: "small"}})',
-                'new ymaps.control.TrafficControl({options: {size: "small"}})',
-                'new ymaps.control.GeolocationControl({options: {size: "small"}})',
-                'search' => 'new ymaps.control.SearchControl({options: {size: "small"}})',
-                'new ymaps.control.FullscreenControl({options: {size: "small"}})',
-                'new ymaps.control.RouteEditor({options: {size: "small"}})',
-            ],
-             /*       'controls' => [
-                        "new ymaps.control.SmallZoomControl()",
-                        "new ymaps.control.TypeSelector(['yandex#map', 'yandex#satellite'])",  
-                    ],                   
-        ]);
-        echo Canvas::widget([
-                'htmlOptions' => [
-                    'style' => 'height: 400px;',
-                    ],
-                'map' => $map,
-            ]);
+            
+    <?= $form->field($model, 'dolgota')->textInput(['style' => ['background-color' => '#ff8e85']]) ?>
+
+    <?= $form->field($model, 'shirota')->textInput(['style' => ['background-color' => '#ff8e85']]) ?>
+    
+    <div id="map" style="min-width: 600px; min-height: 400px"></div>
+    
+    <?php 
+        $this->registerJsVar('moove', TRUE, View::POS_BEGIN);
+        $this->registerJsVar('dolgota', $model->dolgota, View::POS_BEGIN);
+        $this->registerJsVar('shirota', $model->shirota, View::POS_BEGIN);
+        $this->registerJsVar('dolgota_change', $model->dolgota_change, View::POS_BEGIN);
+        $this->registerJsVar('shirota_change', $model->shirota_change, View::POS_BEGIN);
+        $this->registerJsFile('/js/map.js', ['position' => View::POS_END]);
     ?>
-    <?= '</div></div>'*/ ?>
+      
+    <?= $form->field($model, 'dolgota_change')->label('Долгота искаженная')->textInput([
+            'style' => ['background-color' => '#5fa3ff']
+        ]) ?>
+
+    <?= $form->field($model, 'shirota_change')->label('Широта искаженная')->textInput([
+            'style' => ['background-color' => '#5fa3ff']
+        ]) ?>
         
-    <?php // $form->field($model, 'dolgota')->textInput() ?>
-
-    <?php // $form->field($model, 'shirota')->textInput() ?>
-    
-    <?php // $form->field($model, 'dolgota_change')->textInput() ?>
-
-    <?php // $form->field($model, 'shirota_change')->textInput() ?>
-    
     <?php //  $form->field($model, 'image')->label() ?>
     
     <?php if (Yii::$app->session->get('role') == 'head_manager') {
@@ -143,7 +125,10 @@ $this->params['breadcrumbs'][] = 'Обновление';
     
     <?php 
         if ($model->image != null) {
-            echo '<img src="/uploads/image/' . $model->image . '" ></img><br><br><hr>';
+            echo Html::tag('img', '', ['src' => '/' . FileManager::FILES . '/' 
+                    . FileManager::ADDRESS_ORDERS . '/' . $model->image]);
+         //   echo '<img src="/' . FileManager::FILES . '/' . FileManager::ADDRESS_ORDERS 
+         //           . '/' . $model->image . '" ></img><br><br><hr>';
         }
     ?>
     

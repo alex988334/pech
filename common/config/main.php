@@ -9,7 +9,7 @@ return [
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],
-  /*      'db' => [
+   /*     'db' => [
             'class' => 'yii\db\Connection',
             'dsn' => 'mysql:host=localhost;dbname=admin_basemaster',
             'username' => 'admin_gradinas',
@@ -42,3 +42,5 @@ return [
     ], 
     'language' => 'ru-RU',
 ];
+
+

@@ -16,10 +16,7 @@ use Yii;
  * @property User $locked0
  */
 class ChatBlackList extends \yii\db\ActiveRecord
-{
-    const BLACK_LIST_ACTIVE = 1;
-    const BLACK_LIST_BLOCKED = 0;
-
+{    
     /**
      * {@inheritdoc}
      */
@@ -57,6 +54,7 @@ class ChatBlackList extends \yii\db\ActiveRecord
     }
 
     /**
+     * Возращает модель заблокированного пользователя
      * @return \yii\db\ActiveQuery
      */
     public function getBlockingUser()
@@ -65,6 +63,7 @@ class ChatBlackList extends \yii\db\ActiveRecord
     }
 
     /**
+     * Возращает модель блокирующего пользователя
      * @return \yii\db\ActiveQuery
      */
     public function getLockedUser()

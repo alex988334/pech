@@ -16,7 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="history-zakaz-index">
     
-    <?php //Pjax::begin(); ?>    
+    <?php Pjax::begin(); ?>    
 
     <?php 
         $gridView = [ 'dataProvider' => $dataProvider ];  
@@ -85,7 +85,7 @@ $this->params['breadcrumbs'][] = $this->title;
         
         echo GridView::widget($gridView);        
     ?>
-    <?php //Pjax::end(); ?>
+    <?php Pjax::end(); ?>
     
     <?php 
         if ($fields != null) {

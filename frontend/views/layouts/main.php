@@ -23,7 +23,7 @@ AppAsset::register($this);
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">  
     <!--link rel="icon" href="/favicon.ico" type="image/x-icon"-->
-    <?= Html::csrfMetaTags() ?>
+    <?= Html::csrfMetaTags() ?>        
     <title><?= Html::encode($this->title) ?></title>
     <?php 
         $this->head();
@@ -60,6 +60,8 @@ AppAsset::register($this);
                         ['label' => 'Мастера', 'url' => ['/history-master/index']],   
                         '<li class="divider"></li>',                         
                         ['label' => 'Заявки', 'url' => ['/history-zakaz/index']],
+                        '<li class="divider"></li>',                         
+                        ['label' => 'Вход в панель', 'url' => ['/history/index']],
                     ],
                 ],
                 ['label' => 'Пользователи', 'url' => ['/site/user']],                 

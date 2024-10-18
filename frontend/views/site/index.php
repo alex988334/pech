@@ -87,7 +87,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 case 'status':
                     $massColums[$last]['filter'] = $massFilters['vidStatus'];
                     $massColums[$last]['value'] = function ($data) use ($massFilters){
-                        return $massFilters['vidStatus'][$data['status']];
+                        return (key_exists($data['status'], $massFilters['vidStatus'])) ? 
+                                $massFilters['vidStatus'][$data['status']] : $data['status'];
                     };
                     break;  
                 case 'item_name':

@@ -64,11 +64,27 @@ return [
                 'site/signup' => '/site/signup'
             ],
         ],
-                
-        'yandexMapsApi' => [
-            'class' => 'mirocow\yandexmaps\Api',
-        ]
         
+      /*  'assetManager' => [
+            'bundles' => [
+                'dosamigos\google\maps\MapAsset' => [
+                    'options' => [
+                        'key' => 'AIzaSyATSLFGTMVV62tf0BwTUO4waBqjN0nQzH0',
+                        'language' => 'ru',
+                        'libraries' => 'places',
+                    //    'v' => '3.exp',
+                    //    'sensor'=> 'false',
+                        'version' => '3.1.18'
+                    ]
+                ]
+            ]
+        ],*/
+               
+       /* 'yandexMapsApi' => [
+            'class' => 'mirocow\yandexmaps\Api',
+            
+        ]
+        */
     ],
     'params' => $params,
 ];

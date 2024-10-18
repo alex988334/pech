@@ -21,6 +21,7 @@ class Manager extends \yii\db\ActiveRecord
 {
     const SCENARIO_UPDATE_MANAGER = 'update_manager';
     const SCENARIO_UPDATE_HEAD_MANAGER = 'update_head_manager';
+    const SCENARIO_UPDATE_ADMIN = 'update_admin';
     
     /**
      * {@inheritdoc}
@@ -53,6 +54,8 @@ class Manager extends \yii\db\ActiveRecord
         parent::scenarios();        
         
         return [
+            
+            self::SCENARIO_UPDATE_ADMIN => ['imya', 'familiya', 'otchestvo', 'phone1', 'phone2', 'phone3'],
             
             self::SCENARIO_UPDATE_HEAD_MANAGER => [
                 'imya', 'familiya', 'otchestvo', 'phone1', 'phone2', 'phone3'
@@ -97,6 +100,11 @@ class Manager extends \yii\db\ActiveRecord
     public function getUser()
     {
         return $this->hasOne(User::className(), ['id' => 'id_manager']);
+    }
+    
+    public function getRole()
+    {
+        return $this->hasOne(AuthAssignment::className(), ['user_id' => 'id_manager']);
     }
 
     /**

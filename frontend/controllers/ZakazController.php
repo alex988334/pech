@@ -28,6 +28,9 @@ use common\models\ManagerTableGrant;
 use common\models\AuthItem;
 use common\models\HistoryZakaz;
 use common\models\VidStatusHistory;
+use common\models\FileManager;
+
+use yii\helpers\FileHelper;
 
 use frontend\models\ImageForm;
 use yii\web\UploadedFile;
@@ -290,7 +293,7 @@ class ZakazController extends Controller
             foreach ($query as $one) { $connection->createCommand($one)->execute(); }
             $transaction->commit();
             $session->setFlash('message', 'Запрос на утверждении у менеджера'); 
-            $session->setFlash('aktivateZakaz', $zakaz->id);                      
+            $session->set('aktivateZakaz', $zakaz->id);                      
         } catch (\Exception $e) {
             $transaction->rollBack();
             $session->setFlash('message', 'Ошибка при выполнении1');
@@ -385,6 +388,11 @@ class ZakazController extends Controller
                 $model1->save();
                 /*) Yii::$app->session->setFlash('message', 'УСПЕХ ЗАПИСИ!');
         else Yii::$app->session->setFlash('message', 'ОШИБКА ЗАПИСИ!');*/
+                
+        if ($model->image != null && $model->image != '') {
+            $model->image = '/' . FileManager::FILES . '/' 
+                    . FileManager::ADDRESS_ORDERS . '/' . $model->image; 
+        }
         
         return $this->render('view', ['model' => $model, 'model1' => $model1]);
     }
@@ -396,8 +404,13 @@ class ZakazController extends Controller
      */
     public function actionCreate()
     {
-        $model = new Zakaz();
+        $model = new Zakaz();        
         $model->scenario = Zakaz::SCENARIO_CREATE;
+        
+        $region = VidRegion::findOne(['id' => Yii::$app->session->get('id_region')]);
+        $model->id_region = Yii::$app->session->get('id_region');
+        $model->dolgota = $region->dolgota;
+        $model->shirota = $region->shirota;
         
         if ($model->load(Yii::$app->request->post())) {
             
@@ -407,8 +420,8 @@ class ZakazController extends Controller
                 $model->shirota = $region->shirota;
             }
             $model->data_registry = date('Y-m-d');
-            $model->shirota_change = rand(-1500, 1500)/1000000 + $model->shirota;
-            $model->dolgota_change = rand(-1500, 1500)/1000000 + $model->dolgota;
+            $model->shirota_change = rand(-6000, 6000)/1000000 + $model->shirota;
+            $model->dolgota_change = rand(-6000, 6000)/1000000 + $model->dolgota;
             $model->id_region = Yii::$app->session->get('id_region');  
             $id = $model->findBySql('SELECT MAX(id) FROM zakaz')->scalar();
             $model->id = $id + 1;
@@ -441,6 +454,10 @@ class ZakazController extends Controller
      */
     public function actionUpdate($id)
     {
+        $path = FileManager::FILES . '/' . FileManager::ADDRESS_ORDERS . '/';
+        if (!file_exists($path)) {
+            FileHelper::createDirectory($path);
+        }
         
         $model1 = new ImageForm();
         $model = $this->findModel($id);
@@ -458,7 +475,7 @@ class ZakazController extends Controller
             $file = Zakaz::find()->select(['image'])->where('id=:id', [':id' => $model1->id])->limit(1)->one();
             
             try {
-                \yii\helpers\FileHelper::unlink('uploads/image/' . $file->image);
+                \yii\helpers\FileHelper::unlink($path . $file->image);
             } catch (yii\base\ErrorException $e){
                 Yii::$app->session->setFlash('message', 'Старый файл изображения не найден');
             }
@@ -469,15 +486,20 @@ class ZakazController extends Controller
                 $model->id = $model1->id;
                 $model->image = $name;
                 $model->save();
-                
-                $model1 = HistoryZakaz::createHistoryModel($id, VidStatusHistory::STATUS_CHANGE);       
+                $model->image = $model->image;
+                $model2 = HistoryZakaz::createHistoryModel($id, VidStatusHistory::STATUS_CHANGE);       
         
-                if ($model1->validate() && $model1->save()) Yii::$app->session->setFlash('message', 'УСПЕХ ЗАПИСИ!');
+                if ($model2->validate() && $model2->save()) Yii::$app->session->setFlash('message', 'УСПЕХ ЗАПИСИ!');
                 else Yii::$app->session->setFlash('message', 'ОШИБКА ЗАПИСИ!');
             }
         } elseif ($model->load(Yii::$app->request->post())) {
             
             $old = $this->findModel($id);
+            
+            if ($old->shirota != $model->shirota || $old->dolgota != $model->dolgota) {
+                $model->shirota_change = rand(-6000, 6000)/1000000 + $model->shirota;
+                $model->dolgota_change = rand(-6000, 6000)/1000000 + $model->dolgota;
+            }
             
             if ($old->id_status_zakaz == VidStatusZakaz::ORDER_EXECUTES 
                     || $old->id_status_zakaz == VidStatusZakaz::ORDER_REQUEST_REJECTION
@@ -497,9 +519,9 @@ class ZakazController extends Controller
                 $model->image = $name;
             }
             if ($model->save()) {
-                $model1 = HistoryZakaz::createHistoryModel($id, VidStatusHistory::STATUS_CHANGE);       
+                $model2 = HistoryZakaz::createHistoryModel($id, VidStatusHistory::STATUS_CHANGE);       
         
-                if ($model1->validate() && $model1->save()) Yii::$app->session->setFlash('message', 'УСПЕХ ЗАПИСИ!');
+                if ($model2->validate() && $model2->save()) Yii::$app->session->setFlash('message', 'УСПЕХ ЗАПИСИ!');
                 else Yii::$app->session->setFlash('message', 'ОШИБКА ЗАПИСИ!');
                 return $this->redirect(['view', 'id' => $model->id]);
             }
@@ -567,7 +589,7 @@ class ZakazController extends Controller
                         'zakaz.id', 'id_vid_work', 'id_navik', 'zakaz.name', 'opisanie', 
                         'reyting_start', 'gorod', 'poselok', 'ulica', 'cena',
                         'id_status_zakaz', 'data_registry', 'data_start', 
-                        'data_end', 'id_region', 'image'
+                        'data_end', 'id_region', 'image', 'dolgota_change', 'shirota_change'
                     ])
                     ->where('zakaz.id=:id', [':id' => $id])
                     ->joinWith('navik')->joinWith('statusZakaz')

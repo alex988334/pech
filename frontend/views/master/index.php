@@ -16,7 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="master-index">    
-    <?php //Pjax::begin(); ?>
+    <?php Pjax::begin(); ?>
     <p>
         <?= $r = (Yii::$app->session->get('role') == 'manager') 
             ? Html::a('Добавить нового мастера', ['create'], 
@@ -147,7 +147,7 @@ $this->params['breadcrumbs'][] = $this->title;
     ?>
     
     <?= GridView::widget($gridView); ?>   
-    <?php // Pjax::end(); ?>
+    <?php Pjax::end(); ?>
     <?php 
   /*  debugArray(array(0, 1, 2));
     debugArray([0, 1, 2]);

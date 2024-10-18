@@ -3,6 +3,7 @@
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 use common\models\Zakazi;
+use yii\web\View;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Zakazi */
@@ -14,6 +15,20 @@ $this->params['breadcrumbs'][] = ['label' => 'Заявки',
     'url' => Yii::$app->urlManager->createUrl(['/zakaz/index', 'page' => Yii::$app->session->get('page') ?? '1'])];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+
+<?php 
+    //  yandex maps API
+    $url = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=4ec92947-0754-4056-90f0-4c6568e0ade1&load=Map,Placemark';
+    $this->registerJsFile($url, ['position' => View::POS_HEAD]);
+
+    $this->registerJsVar('moove', FALSE, View::POS_BEGIN);
+    $this->registerJsVar('dolgota', $model->dolgota, View::POS_BEGIN);
+    $this->registerJsVar('shirota', $model->shirota, View::POS_BEGIN);
+    $this->registerJsVar('dolgota_change', $model->dolgota_change, View::POS_BEGIN);
+    $this->registerJsVar('shirota_change', $model->shirota_change, View::POS_BEGIN);
+    $this->registerJsFile('/js/map.js', ['position' => View::POS_END]);
+?>
+
 <div class="zakazi-view">      
     <p>        
         <?php 
@@ -54,7 +69,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     ['attribute' => 'shirota_change', 'label' => 'Широта искаженная'],
                     [
                         'format' => 'html',
-                        'value' => Html::img('/uploads/image/' . $model->image), 
+                        'value' => Html::img($model->image), 
                         'label' => 'Изображение'
                     ],         
                     ['attribute' => 'region.name', 'label' => 'Регион'],
@@ -77,11 +92,13 @@ $this->params['breadcrumbs'][] = $this->title;
                     ['attribute' => 'data_registry', 'label' => 'Дата регистрации'],
                     ['attribute' => 'data_start', 'label' => 'Дата выхода на объект'],
                     ['attribute' => 'data_end', 'label' => 'Дата завершения'],
+                   /* ['attribute' => 'dolgota', 'label' => 'Долгота'],
+                    ['attribute' => 'shirota', 'label' => 'Широта'],
                     ['attribute' => 'dolgota_change', 'label' => 'Долгота'],
-                    ['attribute' => 'shirota_change', 'label' => 'Широта'],
+                    ['attribute' => 'shirota_change', 'label' => 'Широта'],*/
                     [
                         'format' => 'html',
-                        'value' => Html::img('/uploads/image/' . $model->image), 
+                        'value' => Html::img($model->image), 
                         'label' => 'Изображение'
                     ],         
                     ['attribute' => 'region.name', 'label' => 'Регион'],            
@@ -95,9 +112,11 @@ $this->params['breadcrumbs'][] = $this->title;
         'attributes' => $attributes
     ])?>   
     
+    <div id="map" style="min-width: 600px; min-height: 400px"></div>
+    
     <?php 
         if ($role == 'master' && $model['id_status_zakaz'] == 1) {
-            echo '<div style="margin-left : auto; margin-right : auto;">'
+            echo '<div style="margin-top : 10px; margin-left : auto; margin-right : auto;">'
                 . Html::a('Взять заявку', Yii::$app->urlManager->createUrl([
                         '/zakaz/activate-zakaz',
                     ]), 
@@ -112,5 +131,5 @@ $this->params['breadcrumbs'][] = $this->title;
                     ]); 
         }
     ?>
-
+    
 </div>

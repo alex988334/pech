@@ -35,12 +35,18 @@ AppAsset::register($this);
             'class' => 'navbar-inverse navbar-fixed-top',
         ],
     ]);
-    $menuItems = [
-        ['label' => 'Home', 'url' => ['/site/index']],
-    ];
+    $menuItems = [];
     if (Yii::$app->user->isGuest) {
         $menuItems[] = ['label' => 'Login', 'url' => ['/site/login']];
     } else {
+        $menuItems[] = ['label' => 'Менеджеры', 'url' => ['/manager/index']];
+        $menuItems[] = ['label' => 'Шаги', 'url' => ['/steps/index']];
+        $menuItems[] = ['label' => 'Создание', 'url' => ['/master-init/index']];
+        $menuItems[] = ['label' => 'Действия', 'url' => ['/master-actions/index']];
+        $menuItems[] = ['label' => 'Регионы', 'url' => ['/region/index']];
+        $menuItems[] = ['label' => 'Работа', 'url' => ['/work/index']];
+        $menuItems[] = ['label' => 'Навыки', 'url' => ['/skill/index']];
+    //    $menuItems[] = ['label' => 'Регистрация', 'url' => ['/site/signup']];
         $menuItems[] = '<li>'
             . Html::beginForm(['/site/logout'], 'post')
             . Html::submitButton(
@@ -61,8 +67,20 @@ AppAsset::register($this);
         <?= Breadcrumbs::widget([
             'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
         ]) ?>
+        <?php 
+                //  если есть служебное сообщение, то отобразим его
+            if ($msg = Yii::$app->session->getFlash('message')) { 
+                echo yii\bootstrap\Alert::widget([
+                    'options' => [
+                        'class' => 'alert-info',
+                    ],
+                    'body' => $msg,
+                ]);                
+            }
+        ?>
         <?= Alert::widget() ?>
         <?= $content ?>
+        
     </div>
 </div>
 

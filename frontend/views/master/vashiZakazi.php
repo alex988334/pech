@@ -12,6 +12,9 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <?php
+//debugArray(count($model));
+//debugArray(count($takeOrders));
+
     if (count($takeOrders) == 0 && count($model) == 0){ 
         echo '<div style="width : 300px; padding : 10px; margin-left : auto; '
             . 'margin-right : auto">' . 
@@ -22,8 +25,9 @@ $this->params['breadcrumbs'][] = $this->title;
     if (count($model) > 0) {
         foreach ($model as $zakaz){
             echo '<div style="width : 300px; padding : 10px; margin-left : auto; '
-            . 'margin-right : auto">' . Html::label('Заявка №' . 
-                    Html::encode($zakaz['id']), null, ['class' => 'btn btn-block btn-warning']) . '</div>';
+            . 'margin-right : auto">' . Html::a('Заявка №' . $zakaz['id'], 
+                    ['/zakaz/view', 'id' => $zakaz['id']], 
+                    ['class' => 'btn btn-block btn-warning']) . '</div>';
             echo DetailView::widget([
                 'model' => $zakaz,
                 'attributes' => [                    

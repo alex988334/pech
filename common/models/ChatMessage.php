@@ -73,6 +73,7 @@ class ChatMessage extends \yii\db\ActiveRecord
         return $this->hasOne(ChatMessageStatus::className(), ['id_message' => 'id', 'id_user' => 'id_user']);
     }
     
+        //ДЛЯ ОТЛАДКИ   
     public function toString()
     {
         $str = '';

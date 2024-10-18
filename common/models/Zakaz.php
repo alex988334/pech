@@ -92,7 +92,7 @@ class Zakaz extends \yii\db\ActiveRecord
             self::SCENARIO_UPDATE_MANAGER => [
                 'id_vid_work', 'id_navik', 'name', 'opisanie', 'reyting_start', 
                 'id_status_zakaz', 'zametka', 'gorod', 'poselok', 'ulica', 'dom', 
-                'kvartira', 'data_start', 'data_end'
+                'kvartira', 'data_start', 'data_end', 'dolgota', 'shirota'
             ],  
             self::SCENARIO_UPDATE_MASTER => [
                 'id_status_zakaz'

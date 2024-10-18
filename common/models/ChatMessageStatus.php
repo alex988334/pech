@@ -16,11 +16,11 @@ class ChatMessageStatus extends \yii\db\ActiveRecord
     /**
      * Константы статусов сообщений
      */    
-    const MESSAGE_SAVE = 'save';
+  //  const MESSAGE_SAVE = 'save';
     const MESSAGE_SEND = 'send';
     const MESSAGE_DELIVERED = 'delivered';
     const MESSAGE_READED = 'readed'; 
-    const MESSAGE_BLACK_LIST = 'black_list';
+   // const MESSAGE_BLACK_LIST = 'black_list';
     
     /**
      * {@inheritdoc}

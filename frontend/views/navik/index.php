@@ -26,11 +26,13 @@ $this->params['breadcrumbs'][] = $this->title;
             'id',
             [       
                 'attribute' => 'id_master',
-                'format' => 'html',
+                'format' => 'raw',
                 'label' => '№ мастера',
                 'value' => function($data){
-                    return Html::a($data['id_master'], 
-                            Yii::$app->urlManager->createUrl(['/master/index', 'id_master' => $data['id_master']]));                    
+                    return Html::a($data['id_master'], ['/master/index'], ['title' => 'Мастера',
+                        'data' => ['method' => 'get', 'params' => [ 'id_master' => $data['id_master']
+                        ]]
+                    ]) ?? '';                    
                 }            
             ], 
             ['attribute' => 'imya', 'label' => 'Имя'],

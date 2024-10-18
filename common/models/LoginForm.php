@@ -70,7 +70,7 @@ class LoginForm extends Model
      */
     public function login()
     {
-        Yii::debug('ОТРАБОТАЛ ВНЕШНИЙ LOGIN В LOGINFORM');
+      //  Yii::debug('ОТРАБОТАЛ ВНЕШНИЙ LOGIN В LOGINFORM');
         if ($this->validate()) {
             Yii::debug('ПРОЙДЕНА ВАЛИДАЦИЯ');
             return Yii::$app->user->login($this->getUser(), /**/$this->rememberMe ?  0/*3600 * 24 * 30*/ : 0);

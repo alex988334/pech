@@ -81,4 +81,11 @@ class VidRegion extends \yii\db\ActiveRecord
     {
         return $this->hasMany(Zakaz::className(), ['id_region' => 'id']);
     }
+    
+    public static function getRelationTablesArray()
+    {
+        $model = VidRegion::find()->select(['id', 'name'])->where(['parent_id' => 0])->all();
+        
+        return ['vidRegion' => $model];
+    }
 }

@@ -22,7 +22,7 @@ use common\models\AuthItem;
 use frontend\models\UpdateForm;
 use common\models\UserSearch;
 use common\models\ManagerTableGrant;
-
+use common\models\HistoryEntry;
 
 
 /**
@@ -174,13 +174,15 @@ class SiteController extends Controller
         
         $flag = false;
         if ($role->name == AuthItem::HEAD_MANAGER 
-                && ($user->role->item_name == User::KLIENT || $user->role->item_name == User::MASTER 
+                && ($user->role->item_name == User::KLIENT 
+                || $user->role->item_name == User::MASTER 
                 || $user->role->item_name == User::MANAGER)) $flag = true;
         if ($role->name == AuthItem::MANAGER 
-                && ($user->role->item_name == User::KLIENT || $user->role->item_name == User::MASTER)) 
+                && ($user->role->item_name == User::KLIENT 
+                || $user->role->item_name == User::MASTER)) 
                 $flag = true;
                 
-        if ($flag || $user->username != 'system') {
+        if ($flag && $user->username != 'system' && $user->role->item_name != User::ADMIN) {
             if ($user->status == User::STATUS_ACTIVE) {
                 $user->status = User::STATUS_BLOCKED;
             } elseif ($user->status == User::STATUS_BLOCKED) {
@@ -233,7 +235,15 @@ class SiteController extends Controller
             $id = Yii::$app->user->id;
             $role = current(Yii::$app->authManager->getRolesByUser($id))->name;              
             $session->set('role', $role); 
-
+            
+            $entry = new HistoryEntry();
+            $entry->id_user = $id;
+            $entry->date = date('Y-m-d');
+            $entry->time = date('H:i:s');
+            $entry->ip = Yii::$app->request->userIP;
+            $entry->action = HistoryEntry::USER_ENTRY;
+            $entry->save();
+            
             switch ($role) {
                 case AuthItem::MASTER : 
                     $id = Master::find()->select('id_region')->where(['id_master' => $id])
@@ -264,6 +274,14 @@ class SiteController extends Controller
     
     public function actionLogout()
     {
+        $entry = new HistoryEntry();
+            $entry->id_user = Yii::$app->user->id;
+            $entry->date = date('Y-m-d');
+            $entry->time = date('H:i:s');
+            $entry->ip = Yii::$app->request->userIP;
+            $entry->action = HistoryEntry::USER_EXITED;
+            $entry->save();
+        
         Yii::$app->user->logout();
      //   return $this->refresh();
         return $this->goHome();

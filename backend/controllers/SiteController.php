@@ -6,6 +6,10 @@ use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use common\models\LoginForm;
+use frontend\models\SignupForm;
+use yii\web\User;
+use common\models\AuthAssignment;
+use common\models\AuthItem;
 
 /**
  * Site controller
@@ -32,11 +36,22 @@ class SiteController extends Controller
                         'allow' => true,
                         'roles' => ['?', '@'],
                     ],
-                /*    [
-                        'actions' => ['logout', 'index'],
+                    [
+                        'actions' => ['logout'],
                         'allow' => true,
-                        'roles' => ['admin', 'manager'],
-                    ],*/
+                        'roles' => ['@'],
+                    ],
+                    [
+                        'actions' => ['index'],
+                        'allow' => true,
+                        'roles' => ['admin'],
+                    ],
+                /*    [ 
+                        'actions' => ['index', 'signup'],
+                        'allow' => true, 
+                        'roles' => ['manager'], 
+                    ], 
+                    //  */
                 ],
             ],
             'verbs' => [
@@ -57,34 +72,36 @@ class SiteController extends Controller
             'error' => [
                 'class' => 'yii\web\ErrorAction',
             ],
+            'captcha' => [
+                'class' => 'yii\captcha\CaptchaAction',
+                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
+            ],
         ];
     }
 
     /**
-     * Displays homepage.
-     *
+     * Displays homepage.     *
      * @return string
      */
     public function actionIndex()
     {
         return $this->render('index');
     }
-
+    
     /**
-     * Login action.
-     *
+     * Авторизация
      * @return string
      */
     public function actionLogin()
     {
         if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
+            return $this->goHome();                                             //  если уже авторизован, то на домашнюю страницу
         }
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        } else {
+            return $this->goBack();                                             //  если авторизация успешна - переход на предыдущую страницу
+        } else {                                                                //  иначе отображаем ошибки
             $model->password = '';
 
             return $this->render('login', [
@@ -94,8 +111,7 @@ class SiteController extends Controller
     }
 
     /**
-     * Logout action.
-     *
+     * Разлогинивание
      * @return string
      */
     public function actionLogout()
@@ -103,5 +119,28 @@ class SiteController extends Controller
         Yii::$app->user->logout();
 
         return $this->goHome();
+    }
+    
+        //  Регистрация нового администратора
+    public function actionSignup(){
+        
+        $model = new SignupForm();
+            //  сохраняем нового пользователя
+        if ($model->load(Yii::$app->request->post()) && $user = $model->signup()) {    
+            $model1 = new AuthAssignment();                                     //  создаем модель роли администратора
+            $model1->user_id = (string)$user->id;
+            $model1->item_name = AuthItem::ADMIN;
+            $model1->created_at = date('U');
+            if ($model1->save()) {                                              //  сохраняем
+                return $this->render('index');
+            } else {
+                debugArray($model1->errors);                                    //  печатаем ошибки
+               // Yii::$app->session->setFlash('message', $model1->getErr);
+            }           
+        } 
+        
+        $model->password = '';                                                  //  сбросим строки паролей
+        $model->password1 = '';
+        return $this->render('signup', ['model' => $model]);
     }
 }

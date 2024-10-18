@@ -35,14 +35,15 @@ class SignupForm extends Model
        /*     ['phone', 'string', 'max' => 11],
             ['phone', 'unique', 'targetClass' => '\common\models\User', 'message' => 'Такой почтовый ящик уже зарегистрирован'],
 */
-            [['password' /*, 'password1'*/ ], 'required'],
-            [['password' /*, 'password1'*/ ], 'string', 'min' => 6],
+            [['password', 'password1'], 'required'],
+            [['password', 'password1'], 'string', 'min' => 6],
         ];
     }
 
     public function attributeLabels() {
         return [
             'username' => 'Имя пользователя (логин)',
+            'email' => 'Почта',
             'password' => 'Пароль',
             'password1' => 'Подтверждение пароля'
         ];
@@ -50,8 +51,7 @@ class SignupForm extends Model
 
 
     /**
-     * Signs user up.
-     *
+     * Регистрация нового пользователя
      * @return User|null the saved model or null if saving fails
      */
     public function signup()
@@ -59,10 +59,13 @@ class SignupForm extends Model
         if (!$this->validate()) {
             return null;
         }
+        if ($this->password != $this->password1){
+            return null;
+        }
         
         $user = new User();
         $user->username = $this->username;
-      //  $user->email = $this->email;
+        $user->email = $this->email;
         $user->setPassword($this->password);
         $user->generateAuthKey();
         

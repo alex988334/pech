@@ -13,7 +13,7 @@ use common\models\ClientOrderMaster;
 class ClientOrderMasterSearch extends ClientOrderMaster
 {   
     public $created_at;
-    
+        //  клиентские параметры
     public $client_id_klient;
     public $client_imya;
     public $client_familiya;
@@ -23,7 +23,7 @@ class ClientOrderMasterSearch extends ClientOrderMaster
     public $client_reyting;
     public $client_balans;
     public $client_id_region;    
-
+        //  параметры заявок
     public $order_id;
     public $order_id_vid_work;
     public $order_id_navik;
@@ -50,7 +50,7 @@ class ClientOrderMasterSearch extends ClientOrderMaster
     public $order_id_region;
     public $order_id_ocenka;
     public $order_otziv;    
-   
+        //  параметры мастеров
     public $master_id_master;
     public $master_familiya;
     public $master_imya;
@@ -68,10 +68,12 @@ class ClientOrderMasterSearch extends ClientOrderMaster
     public $master_id_region;
     public $master_limit_zakaz;
     
+        //  типы используемых моделей
     const CLIENT = 'client';
     const ORDER = 'order';
     const MASTER = 'master';
     
+        //  названия таблиц в бд
     const KLIENT = 'klient';
     const ZAKAZ = 'zakaz';
     
@@ -93,8 +95,7 @@ class ClientOrderMasterSearch extends ClientOrderMaster
           //  [['id_status_on_off'], 'exist', 'skipOnError' => true, 'targetClass' => VidDefault::className(), 'targetAttribute' => ['id_status_on_off' => 'id']],
             [['client_id_klient'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['client_id_klient' => 'id']],
             [['client_id_region'], 'exist', 'skipOnError' => true, 'targetClass' => VidRegion::className(), 'targetAttribute' => ['client_id_region' => 'id']],
-        
-            
+                    
            // [['order_id_vid_work', 'order_id_navik', 'order_name', 'order_cena', 'order_opisanie', 'order_reyting_start', 'order_data_registry', 'order_data_start', 'order_data_end', 'order_id_region'], 'required'],
             [['order_id', 'order_id_vid_work', 'order_id_navik', 'order_cena', 'order_reyting_start', 'order_dom', 'order_kvartira', 'order_id_status_zakaz', 'order_id_shag', 'order_id_region', 'order_id_ocenka'], 'integer'],
             [['order_data_registry', 'order_data_start', 'order_data_end'], 'safe'],
@@ -111,8 +112,7 @@ class ClientOrderMasterSearch extends ClientOrderMaster
             [['order_id_region'], 'exist', 'skipOnError' => true, 'targetClass' => VidRegion::className(), 'targetAttribute' => ['order_id_region' => 'id']],
             [['order_id_vid_work'], 'exist', 'skipOnError' => true, 'targetClass' => VidWork::className(), 'targetAttribute' => ['order_id_vid_work' => 'id']],
             [['order_id_ocenka'], 'exist', 'skipOnError' => true, 'targetClass' => VidOcenka::className(), 'targetAttribute' => ['order_id_ocenka' => 'id']],
-        
-            
+                    
       //      [['master_id_master', 'master_familiya', 'master_imya', 'master_reyting', 'master_data_registry', 'master_phone', 'master_id_region'], 'required'],
             [['master_id_master', 'master_vozrast', 'master_staj', 'master_reyting', 'master_id_status_work', 'master_balans', 'master_id_region', 'master_limit_zakaz'], 'integer'],
             [['master_data_registry', 'master_data_unregistry'], 'safe'],
@@ -125,8 +125,7 @@ class ClientOrderMasterSearch extends ClientOrderMaster
             [['master_id_region'], 'exist', 'skipOnError' => true, 'targetClass' => VidRegion::className(), 'targetAttribute' => ['master_id_region' => 'id']],
             //[['id_status_on_off'], 'exist', 'skipOnError' => true, 'targetClass' => VidDefault::className(), 'targetAttribute' => ['id_status_on_off' => 'id']],
             [['master_id_status_work'], 'exist', 'skipOnError' => true, 'targetClass' => VidStatusWork::className(), 'targetAttribute' => ['master_id_status_work' => 'id']],
-            [['master_id_master'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['master_id_master' => 'id']],
-   //       
+            [['master_id_master'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['master_id_master' => 'id']],    
         ];
     }
 
@@ -139,46 +138,62 @@ class ClientOrderMasterSearch extends ClientOrderMaster
         return Model::scenarios();
     }
     
-    
+        //  выполняет очистку параметров от префиксов моделей
+        //  params - параметры моделей
+        //  префиксы моделей потомков client_ order_ master_, требуют удаления
+        //  параметров родительской модели идут без префиксов
     protected function decodeParams(array $params)
     {
+            //  создаем массив условий, который содержит массивы для каждой отдельной модели
         $massWhere = [self::CLIENT => [], self::ORDER => [], self::MASTER => []];
+            //  переберем все параметры
         foreach ($params as $key => $val) {
-            if (strpos($key, self::CLIENT)) {
+                //  если параметр содержит префикс client
+            if (strpos($key, self::CLIENT)) {                                   //  для параметров модели клиентов
+                    //  обрежем ключ параметра на длинну префикса и положим в массив условий
                 $massWhere[self::CLIENT][substr($key, 7)] = $val;
             } 
-            if (strpos($key, self::ORDER)){
+            if (strpos($key, self::ORDER)){                                     //  для параметров модели заявок
                 $massWhere[self::ORDER][substr($key, 6)] = $val;
             }
-            if (strpos($key, self::MASTER)){
+            if (strpos($key, self::MASTER)){                                    //  для параметров модели мастеров
                 $massWhere[self::MASTER][substr($key, strlen(self::MASTER)+1)] = $val;
             }            
         }
         
-        return $massWhere;
+        return $massWhere;                                                      //  вернем сгенерированный массив условий
     }
     
-    
+        //  создает параметры сортировки столбцов таблицы
+        //  т.к. параметры модели идут с префиксом, то столбцы сортировки придется указать детально
+        //  при этом префиксы параметров отличаются от названия таблиц
     protected function getSortAllFields()
     {
         $attributes = [];
-        $mass = [ Klient::getTableSchema()->getColumnNames(), Zakaz::getTableSchema()->getColumnNames(), Master::getTableSchema()->getColumnNames() ];   
-        $names = [ self::CLIENT, self::ORDER, self::MASTER ];
-        $names1 = [ self::KLIENT, self::ZAKAZ, self::MASTER ];
-        foreach ($mass as $one) {
+            //  создаем массив с названиями параметров всех моделей
+        $mass = [ 
+            Klient::getTableSchema()->getColumnNames(), 
+            Zakaz::getTableSchema()->getColumnNames(), 
+            Master::getTableSchema()->getColumnNames() 
+        ];   
+            //  создаем массивы сопоставления префиксов параметров и таблиц бд моделей
+        $names = [ self::CLIENT, self::ORDER, self::MASTER ];                   //  префиксы
+        $names1 = [ self::KLIENT, self::ZAKAZ, self::MASTER ];                  //  названия таблиц
+        foreach ($mass as $one) {                                               //  перебираем массивы параметров моделей
             foreach ($one as $val) {
-                $attributes[current($names) .'.'. $val] =  ['asc' => [current($names1) .'.'. $val => SORT_ASC], 
-                        'desc' => [current($names1) .'.'. $val => SORT_DESC]];    
+                $attributes[current($names) .'.'. $val] = [                     //  указываем сортировку для параметра в формате
+                    'asc' => [current($names1) .'.'. $val => SORT_ASC],         //  [client.name => [asc => [klient.name => sort_asc]]]
+                    'desc' => [current($names1) .'.'. $val => SORT_DESC]
+                ];    
             }
-            next($names1);
+            next($names1);                                                      //  переходим к следующему элементу массива
             next($names);
         }
         
-        return $attributes;
+        return $attributes;                                                     //  возращаем сгенерированный массив сортировки
     }
 
-    
-
+        //  создает параметры сортировки
     protected function getSort()
     {
         $attributes = $this->getSortAllFields();
@@ -223,16 +238,16 @@ class ClientOrderMasterSearch extends ClientOrderMaster
             $this->order_id = $id;
             $this->id_order = $id;
         }
-        
-        
+            
         $query = ClientOrderMaster::find()
                 ->where(['client_order_master.id_region' => Yii::$app->session->get('id_region')])               
                 ->joinWith('client')->joinWith('order')->joinWith('master');
-                
+            //  если кнопка видимости выполненных заявок отключена, то устанавливаем условие иключающее выполненные заявки  
         if (Yii::$app->session->get('invisibleExecutedOrders') == FALSE) {
             $query->andWhere(['<>', 'id_status_zakaz', VidStatusZakaz::ORDER_EXECUTED]);
             $query->andWhere(['<>', 'id_status_zakaz', VidStatusZakaz::ORDER_CANCELLED]);
         } 
+            //  если кнопка заблокированных заявок отключена, то исключаем со статусом - заблокирована
         if (Yii::$app->session->get('invisibleBlockedOrders') == FALSE) {
             $query->andWhere(['<>', 'id_status_zakaz', VidStatusZakaz::ORDER_UNAVAILABLE]);            
         } 
@@ -243,13 +258,13 @@ class ClientOrderMasterSearch extends ClientOrderMaster
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);    
-        
+            //  устанавливаем сортировку
         $dataProvider->setSort([
             'attributes' => $this->getSort()           
         ]);    
         
         $this->load($params);
-
+            //  если указаны даты, то приводим их нужному формату
         if (isset($this->created_at) && (!empty($this->created_at))) {
             $this->created_at = strtotime($this->created_at);
         }
@@ -267,15 +282,14 @@ class ClientOrderMasterSearch extends ClientOrderMaster
         }
         if (isset($this->master_data_unregistry) && (!empty($this->master_data_unregistry))) {
             $this->master_data_unregistry = date('Y-m-d', strtotime($this->master_data_unregistry));
-        }
-        
+        }        
         
         if (!$this->validate()) {
             // uncomment the following line if you do not want to return any records when validation fails
             // $query->where('0=1');            
             return $dataProvider;
         }
-        
+            //  добавляем условия выбрки
         $query->andFilterWhere([  
             'client_order_master.id' => $this->id,
             'client_order_master.id_client' => $this->id_client,       
@@ -318,8 +332,7 @@ class ClientOrderMasterSearch extends ClientOrderMaster
             'master.limit_zakaz' => $this->master_limit_zakaz,    
             'master.data_registry' => $this->master_data_registry,
             'master.data_unregistry' => $this->master_data_unregistry,
-        ]);
-         
+        ]);         
         
         $query->andFilterWhere(['like', 'klient.imya', $this->client_imya])
                 ->andFilterWhere(['like', 'klient.familiya', $this->client_familiya])

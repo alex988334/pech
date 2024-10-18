@@ -19,18 +19,17 @@
         "yiisoft/yii2": "~2.0.6",
         "yiisoft/yii2-bootstrap": "~2.0.0",
         "yiisoft/yii2-swiftmailer": "~2.0.0 || ~2.1.0",
-        "consik/yii2-websocket": "^1.0",
-        "yiisoft/yii2-jui": "^2.0",		
-		"mirocow/yii2-yandex-maps" : "@dev",
-        "workerman/workerman": "^3.5",
-        "kartik-v/yii2-widget-datepicker": "^1.4"
+        "yiisoft/yii2-jui": "^2.0",
+        "kartik-v/yii2-widget-datepicker": "^1.4",
+        "2amigos/yii2-google-maps-library": "*"		
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.0.0",
         "yiisoft/yii2-gii": "~2.0.0",
         "yiisoft/yii2-faker": "~2.0.0",
         "codeception/base": "^2.2.3",
-        "codeception/verify": "~0.3.1"
+        "codeception/verify": "~0.3.1",	
+		"mirocow/yii2-yandex-maps" : "@dev"
     },
     "config": {
         "process-timeout": 1800,

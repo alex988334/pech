@@ -1,16 +1,14 @@
-
+console.log("MESSENGER");
 var chat = null;
 var idChat = null;
 var setName = false;
 let HOST_NAME = "localhost";
 //let HOST_NAME = "expertpech.ru";
 //let HOST_NAME = "gradinas.ru";
-let pathChatImage = "/images/chat/";
+let pathChatImage = "/files/chats/";
 let protocol = "ws";
 let port = ":25555";
-let adress = ""
-
-
+let adress = "";
 
 let ERROR_USER_NAME = 1001;
 let ERROR_WRITE_BASE = 1002;
@@ -183,6 +181,7 @@ $(window).on("load", function() {
  * @returns {String}
  */
 function createMessage(elem, id_user){
+    console.log(elem);
     var div;
     var parent = '';
     var file = '';
@@ -373,7 +372,7 @@ function chooseMessage(div){
  */
 function showLeftPanel(){
     if ($("#left-panel").css("display") != "none") {
-        $("#showLeftPanel").children().attr("src", "/web/images/invisibility16.png");
+        $("#showLeftPanel").children().attr("src", "/images/invisibility16.png");
         $("#left-panel").css("display", "none");
         $("#messengerBody").css("width", "450px");
         $("#right-panel").css("width", "100%");
@@ -385,7 +384,7 @@ function showLeftPanel(){
         $("#right-panel").css("width", "57%");
         $("#editorContainer").css("width", "80%");
         $("#editorButtonsContainer").css("width", "17%");
-        $("#showLeftPanel").children().attr("src", "/web/images/visible16.png");
+        $("#showLeftPanel").children().attr("src", "/images/visible16.png");
     }
 }
 
@@ -513,6 +512,9 @@ function sendMessage(){
                     $('#progressDiv').css("visibility", "hidden");
                     if (data.status == STATUS_ACCEPT){
                         dataWS.file = data.file;
+                        if (dataWS.message.length == 0) dataWS.message = dataWS.file;
+                        console.log('dataWS => ');
+                        console.log(dataWS);
                         chat.send(JSON.stringify(dataWS));
                     } else console.log(data);
                 },
@@ -992,6 +994,8 @@ function initializationChat(data){                                              
  * @returns {undefined}
  */
 function loadingChat(data){                                                     //  создаем заглавие чата в виде даты
+    console.log('data');
+    console.log(data);
     var table = $(".message-table")[0];
     var i = "";
     $.each(data.messages, function(index, elem){
@@ -1120,6 +1124,7 @@ function createWebSocket(){
                     chat.send(JSON.stringify({"action": OP_GET_CHATS}));
                 }
 
+                console.log(massMessages);
                 massMessages.forEach(function (item, i, arr){
                     chat.send(JSON.stringify(item));
                 });
@@ -1136,13 +1141,13 @@ function createWebSocket(){
                             if (elem.id == response.messages[i].id) {
                                 switch (response.messages[i].status) {
                                     case MESSAGE_SEND:
-                                        imgName = "/web/images/send.png";
+                                        imgName = "/images/send.png";
                                         break;
                                     case MESSAGE_DELIVERED:
-                                        imgName = "/web/images/delivered.png";
+                                        imgName = "/images/delivered.png";
                                         break;
                                     case MESSAGE_READED:
-                                        imgName = "/web/images/readed.png";
+                                        imgName = "/images/readed.png";
                                         break;
                                     default:
                                         alert("картинка не найдена");
@@ -1184,6 +1189,7 @@ function createWebSocket(){
             }
                 break;
             case OP_INPUT_MESSAGE: {
+                    console.log(response.messages);
                 var key = null;
                 for (k in response.messages) { key = k; break; }
 
@@ -1196,7 +1202,8 @@ function createWebSocket(){
                 $(".message-table").find('.write[id='+ response.messages[key].author +']').closest("tr").remove();
 
                     //  если чат светнут показываем колокольчик на кнопке свертывания чата
-                if ($("#messengerBody").attr("aria-expanded") == "false" || $("#messengerBody").attr("aria-expanded") == null) {
+                if ($("#messengerBody").attr("aria-expanded") == "false" 
+                        || $("#messengerBody").attr("aria-expanded") == null) {
                     $("#head_alarm").css("display", "block");
                 }
                 var status = MESSAGE_DELIVERED;
@@ -1258,7 +1265,7 @@ function createWebSocket(){
                         var alarm = false;
 
                         if (elem['status'] == CHAT_DIACTIVATED) status = 'style="background-color: grey; border-color: black;"';
-                        if (idUser == Number(elem['autor'])) autor = '&copy;';
+                        if (idUser == Number(elem['author'])) autor = '&copy;';
 
                         if (response.messages[elem['id']] != null /* && response.users[response.messages[elem['id']]['id_user']] != null*/) {
                             chatUser = response.messages[elem['id']]['username'] +': <i>'+ response.messages[elem['id']]['message'] +'</i>';
@@ -1267,7 +1274,11 @@ function createWebSocket(){
                             //   echo strftime('%e %b', strtotime($messages[$one['id']]['date']));
 
                             if (response.messages[elem['id']]['status'].localeCompare("readed") != 0 
-                                    && Number(response.messages[elem['id_user']]) != Number(idUser)) { alarm = true; }
+                                    && Number(response.messages[elem['id']]['id_user']) != Number(idUser)) { 
+                                alarm = true; 
+                                console.log("id_chat => " + elem['id'] + ", idUser => " + idUser 
+                                        + ",  alarm => true");
+                            }
                         }
 
                         $("#chats").append('<table id="'+ elem['id'] +'" rows="2" cols="4" class="chat-user" onclick="getHistoryChat(this)" >'
@@ -1358,12 +1369,12 @@ function createWebSocket(){
                 }
              //   if (response.id_chat == idChat) {
                     if (response.s_code) {
-                        if ($(".message-table").find(".write[id="+ response.autor +"]").length > 0)
-                            $(".message-table").find(".write[id="+ response.autor +"]").remove();
-                        $(".message-table").append(createStr('<div id="'+ response.autor +'" class="write">'+ response.autor +' печатает</div>'));
+                        if ($(".message-table").find(".write[id="+ response.author +"]").length > 0)
+                            $(".message-table").find(".write[id="+ response.author +"]").remove();
+                        $(".message-table").append(createStr('<div id="'+ response.author +'" class="write">'+ response.author +' печатает</div>'));
                         $(".message-container")[0].scrollTop = $(".message-container")[0].scrollHeight;
                     } else {
-                        $(".message-table").find(".write[id="+ response.autor +"]").remove();
+                        $(".message-table").find(".write[id="+ response.author +"]").remove();
                     }
               //  }
             }
@@ -1429,6 +1440,9 @@ function createWebSocket(){
             case OP_LIST_USERS: {
                 if (Number(response.status.status.status) == STATUS_ACCEPT) {
                     var status;
+                    
+                    console.log(response);
+                    
                     $.each(response.users, function (index, elem){
                         status = true;
                         if (idUser != Number(elem.id_user)) {

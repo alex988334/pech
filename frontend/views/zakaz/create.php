@@ -4,6 +4,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use yii\helpers\ArrayHelper;
 use yii\jui\DatePicker;
+use yii\web\View;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Zakazi */
@@ -17,11 +18,19 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?php
     /* @var $this yii\web\View */
-    /* @var $model common\models\Zakazi */
+    /* @var $model common\models\Zakaz */
     /* @var $form yii\widgets\ActiveForm */
     ?>
 
 <div class="zakazi-form">
+    
+    <?php 
+       /// $url = '<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey'
+       //         . '=4ec92947-0754-4056-90f0-4c6568e0ade1" type="text/javascript"></script>';
+    
+        $url = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=4ec92947-0754-4056-90f0-4c6568e0ade1';
+        $this->registerJsFile($url, ['position' => View::POS_HEAD]);
+    ?>
     
     <?php // debugArray($model) ?>
 
@@ -74,12 +83,22 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
     ]) ?>
     
-    <?php // map ?>
 
     <?= $form->field($model, 'dolgota')->textInput() ?>
 
     <?= $form->field($model, 'shirota')->textInput() ?>
-
+    
+    <div id="map" style="min-width: 600px; min-height: 400px"></div>
+    
+    <?php 
+        $this->registerJsVar('moove', TRUE, View::POS_BEGIN);
+        $this->registerJsVar('dolgota', $model->dolgota, View::POS_BEGIN);
+        $this->registerJsVar('shirota', $model->shirota, View::POS_BEGIN);
+        $this->registerJsVar('dolgota_change', $model->dolgota_change, View::POS_BEGIN);
+        $this->registerJsVar('shirota_change', $model->shirota_change, View::POS_BEGIN);
+        $this->registerJsFile('/js/map.js', ['position' => View::POS_END]);
+    ?>
+       
     <?php // $form->field($model, 'dolgota_isk')->textInput() ?>
 
     <?php // $form->field($model, 'shirota_isk')->textInput() ?>
@@ -93,7 +112,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?php // $form->field($model, 'otziv')->textInput(['maxlength' => true]) ?>
 
-    <div class="form-group">
+    <div class="form-group" style="margin-top: 15px;">
         <?= Html::submitButton('Добавить', ['class' => 'btn btn-success']) ?>
     </div>
 

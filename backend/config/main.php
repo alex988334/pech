@@ -18,7 +18,10 @@ return [
     ],
     'components' => [
         'request' => [
-            'csrfParam' => '_csrf-backend',
+            'enableCsrfValidation' => true,
+            'enableCsrfCookie' => true,
+            'enableCookieValidation' => true,
+      //      'csrfParam' => '_csrf-backend',
         ],
         'user' => [
             'identityClass' => 'common\models\User',

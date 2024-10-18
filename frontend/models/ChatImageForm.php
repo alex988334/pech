@@ -6,6 +6,7 @@ use Yii;
 use yii\base\Model;
 use common\models\Session;
 use yii\helpers\FileHelper;
+use common\models\FileManager;
 
 /**
  * Login form
@@ -46,7 +47,7 @@ class ChatImageForm extends Model
     {
         if ($this->validate()) {
             $name = date('YmdHis') . '.' .  $this->file->extension;            
-            $path = Yii::getAlias('@web') . 'images/chat/' . $this->id_chat;
+            $path = Yii::getAlias('@web') . FileManager::FILES . '/'. FileManager::ADDRESS_CHATS . '/' . $this->id_chat;
             
             if (!is_dir($path)) {
                 try {
@@ -55,7 +56,8 @@ class ChatImageForm extends Model
                         return null;                        
                     } 
                 } catch (\yii\base\Exception $ex) { 
-                    $this->error = 'EXCEPTION - ошибка при создании папки; $ex=' . $ex;
+                    $this->error = 'EXCEPTION - ошибка при создании папки; $path => ' .
+                            $path . ' $ex=' . $ex;
                     return null;                     
                 }
             }           

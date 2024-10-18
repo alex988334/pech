@@ -37,7 +37,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 ]);
   //    */  
     ?>      
-    <?php Pjax::begin(); ?>
+    
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
     <p>
         <?= ($role == AuthItem::MANAGER || $role == AuthItem::HEAD_MANAGER) ?
@@ -64,6 +64,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 Html::a($buttonLabel1, ['show-blocked-orders'], ['class' => $class1]) : ''; ?>
         
     </p>
+    
+    <?php Pjax::begin(); ?>
     <?php 
         $gridView = [ 'dataProvider' => $dataProvider ];  
         if ($role == AuthItem::MANAGER || $role == AuthItem::HEAD_MANAGER) {
@@ -222,26 +224,17 @@ $this->params['breadcrumbs'][] = $this->title;
         } 
         $gridView['columns'] = $massColums;
     ?>
+    
     <?= GridView::widget($gridView); ?>
     <?php Pjax::end(); ?>
     
     <?php 
         if ($id = Yii::$app->session->get('aktivateZakaz')) {
          //   $region = VidRegion::find()->select(['name'])->where(['id' => Yii::$app->session->get('id_region')])->limit(1)->scalar();
-            $js = ' var data = {"action" : "system", "id" : ' . $id 
-                    .', "status" : 150 }; if (securityWebSocket()) { console.log("ОТПРАВКА");'
-                    . ' chat.send(JSON.stringify(data)); } else '
-                    . '{ massMessages.push(data); console.log("Ожидание отправки"); console.log(massMessages);}';
-           // if (securityWebSocket()){}
-            /*$js = '(new WebSocket("ws://expertpech.ru:25555")).onopen = function(e) {
-                    this.send( JSON.stringify({"action" : "setRegion", "region" : "' . $region . '", "head" : true}) );
-                    this.send( JSON.stringify({"action" : "chat", "message" : "Заявка №' . $id . ' закреплена за мастером №' . Yii::$app->user->getId() . '"}) );
-                    this.close();
-                    console.log("СОБЫТИЕ открытия сокета");
-                    console.log("' . $region . '");
-                };';*/
-            Yii::$app->session->remove('aktivateZakaz');
-            $this->registerJs($js, yii\web\View::POS_READY);            
+            $this->registerJsVar('id', (int)$id);
+           
+            $this->registerJsFile('@web/js/system.js', ['depends' => 'frontend\assets\System']);
+            Yii::$app->session->remove('aktivateZakaz');            
         }                
     ?>
     <div>

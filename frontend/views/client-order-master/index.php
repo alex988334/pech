@@ -22,7 +22,7 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="client-order-master-index">
 
     <!--h1><?php // Html::encode($this->title) ?></h1-->
-    <?php // Pjax::begin(); ?>
+    <?php  Pjax::begin(); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
     <p>
@@ -98,8 +98,9 @@ $this->params['breadcrumbs'][] = $this->title;
                     'format' => 'raw',
                     'value' => function ($data){
                         return Html::a($data['id_client'], ['/klient/index'], 
-                                [ 'title' => 'переход к клиентам',
-                                    'data' => ['method' => 'get', 'params' => [ 'id_klient' => $data['id_client']]]
+                                [                                    
+                                    'title' => 'переход к клиентам',
+                                    'data' => ['method' => 'get', 'params' => ['id_klient' => $data['id_client']]]
                                 ]) ?? '';                             
                     }
                 ];
@@ -138,7 +139,8 @@ $this->params['breadcrumbs'][] = $this->title;
                             'format' => 'raw',
                             'value' => function ($data){
                                 return Html::a($data['id_order'], ['/zakaz/index'], 
-                                        [ 'title' => 'Заявки',
+                                        [                                   
+                                            'title' => 'Заявки',
                                             'data' => ['method' => 'get', 'params' => [ 'id' => $data['id_order']]]
                                         ]) ?? '';                             
                             }
@@ -410,7 +412,7 @@ $this->params['breadcrumbs'][] = $this->title;
     
     <?= GridView::widget($gridView); ?>
     
-    <?php //Pjax::end(); ?>
+    <?php Pjax::end(); ?>
     
     <div>
         <?php 

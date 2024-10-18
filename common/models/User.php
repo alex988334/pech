@@ -31,6 +31,7 @@ class User extends ActiveRecord implements IdentityInterface
     const STATUS_BLOCKED = 1;
     const STATUS_ACTIVE = 10;
     
+    const ADMIN = 'admin';
     const MANAGER = 'manager';
     const HEAD_MANAGER = 'head_manager';
     const MASTER = 'master';
@@ -231,7 +232,11 @@ class User extends ActiveRecord implements IdentityInterface
         $vid = [];        
         $vid['vidRole'] = AuthItem::find()->select(['name', 'description'])
                 ->indexBy('name')->asArray()->all(); 
-        
+        $vid['vidStatus'] = [
+                self::STATUS_ACTIVE => 'Активен', 
+                self::STATUS_BLOCKED => 'Заблокирован',
+                self::STATUS_DELETED => 'Удален'
+        ];
         return $vid;
     }
     

@@ -10,7 +10,8 @@ use common\models\Master;
 use common\models\Manager;
 use common\models\Klient;
 use common\models\MasterSearch;
-use common\models\MasterVsZakaz;
+//use common\models\MasterVsZakaz;
+use common\models\ClientOrderMaster;
 use common\models\Zakaz;
 use common\models\VidStatusWork;
 use common\models\VidDefault;
@@ -140,14 +141,14 @@ class MasterController extends Controller
         
     public function actionVashiZakazi()
     {       
-        $zakaz = MasterVsZakaz::find()
-                ->select('id_zakaz')                
+        $zakaz = ClientOrderMaster::find()
+                ->select('id_order')                
                 ->where(['id_master' => Yii::$app->user->getId()])             
                 ->asArray()
                 ->all();    
         if (count($zakaz) > 0){
-            $id = ArrayHelper::getColumn($zakaz, 'id_zakaz');
-            foreach ($zakaz as $value) { $mass[] = $value['id_zakaz']; }       
+            $id = ArrayHelper::getColumn($zakaz, 'id_order');
+           // foreach ($zakaz as $value) { $mass[] = $value['id_zakaz']; }       
             $takeOrders = Zakaz::find()
                     ->where(['id' => $id, 'id_status_zakaz' => VidStatusZakaz::ORDER_REQUEST_TAKE])
                     ->with('vidWork', 'navik', 'statusZakaz', 'shag', 'region', 'klient')
